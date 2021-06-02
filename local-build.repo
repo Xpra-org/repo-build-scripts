@@ -1,5 +1,5 @@
 [xpra-local-build]
-name=Xpra Local Build $releasever - $basearch
+name=Repo Local Build $releasever - $basearch
 baseurl=file:///src/repo/$basearch
 enabled=1
 deltarpm=0
@@ -10,7 +10,7 @@ type=rpm
 skip_if_unavailable=False
 
 [xpra-local-source]
-name=Xpra Local Source $releasever - $basearch
+name=Repo Local Source $releasever - $basearch
 baseurl=file:///src/repo/SRPMS
 enabled=1
 deltarpm=0
