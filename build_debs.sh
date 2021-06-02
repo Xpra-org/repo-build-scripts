@@ -19,8 +19,5 @@ if [ "${DEBUG:-0}" == "1" ]; then
 fi
 
 pushd debian
-$BASH ./libcuda1.sh
-$BASH ./libnvidia-fbc1.sh
-$BASH ./xpra-html5.sh
-$BASH ./xpra.sh
+$bash ./build
 popd
