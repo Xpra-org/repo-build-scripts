@@ -19,5 +19,5 @@ if [ "${DEBUG:-0}" == "1" ]; then
 fi
 
 pushd debian
-$bash ./build.sh
+$BASH ./build.sh
 popd
