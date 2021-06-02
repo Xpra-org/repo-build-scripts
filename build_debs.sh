@@ -4,6 +4,8 @@
 #apt-get upgrade -y
 #apt-get dist-upgrade -y
 
+apt-get install -y devscripts
+
 eval `dpkg-architecture -s`
 REPO_ARCH_PATH="`pwd`/repo/main/binary-$DEB_BUILD_ARCH"
 export REPO_ARCH_PATH
