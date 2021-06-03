@@ -89,6 +89,7 @@ for DISTRO in $DEB_DISTROS; do
 	IMAGE_NAME="`echo $DISTRO_LOWER | sed 's/:/-/g'`-repo-build"
 	podman image exists $IMAGE_NAME
 	if [ "$?" == "0" ]; then
+		echo "${IMAGE_NAME} already exists"
 		continue
 	fi
 	echo
