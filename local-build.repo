@@ -1,4 +1,4 @@
-[xpra-local-build]
+[repo-local-build]
 name=Repo Local Build $releasever - $basearch
 baseurl=file:///src/repo/$basearch
 enabled=1
@@ -9,7 +9,7 @@ gpgcheck=0
 type=rpm
 skip_if_unavailable=False
 
-[xpra-local-source]
+[repo-local-source]
 name=Repo Local Source $releasever - $basearch
 baseurl=file:///src/repo/SRPMS
 enabled=1

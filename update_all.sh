@@ -15,7 +15,7 @@ for DISTRO in $DISTROS; do
 	#ie: DISTRO_NAME="fedora-33"
 	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
 	DISTRO_NAME=`echo ${DISTRO,,} | awk -F: '{print $1}'`
-	IMAGE_NAME="$FULL_DISTRO_NAME-xpra-build"
+	IMAGE_NAME="$FULL_DISTRO_NAME-repo-build"
 
 	COUNT=`buildah images | grep "$IMAGE_NAME " | wc -l`
 	if [ "${COUNT}" != "1" ]; then
@@ -29,7 +29,7 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME rm -fr "/src/repo/.repodata" "/src/repo/repodata" "/src/repo/x86_64"
 		buildah run $IMAGE_NAME mkdir "/src/repo/x86_64"
 		buildah run $IMAGE_NAME createrepo "/src/repo/x86_64/"
-		buildah run $IMAGE_NAME dnf update --disablerepo=xpra-local-build -y
+		buildah run $IMAGE_NAME dnf update --disablerepo=repo-local-build -y
 	else
 		buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 		buildah run $IMAGE_NAME apt-get update
