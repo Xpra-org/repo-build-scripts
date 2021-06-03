@@ -1,3 +1,12 @@
 opt/*
 cache/*
 pkgs/*
+
+# eclipse IDE:
+# /
+/.project
+/.pydevproject
+/.settings/org.eclipse.core.resources.prefs
+# pycharm IDE:
+/.idea
+
