@@ -102,6 +102,6 @@ for DISTRO in $DISTROS; do
 				--volume $REPO_PATH:/src/repo:noexec,nodev,z \
 				--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
 				--volume ${PACKAGING}/debian:/src/debian:O \
-				$TEMP_IMAGE $BASH "/src/${BUILD_SCRIPT}"
+				$TEMP_IMAGE $BASH "/src/${BUILD_SCRIPT}" |& tee "./${FULL_DISTRO_NAME}.log"
 	buildah rm "${TEMP_IMAGE}"
 done
