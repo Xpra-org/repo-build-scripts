@@ -110,7 +110,7 @@ while read p; do
 		cp ./pkgs/* "rpmbuild/SOURCES/"
 		cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
 		echo " - building RPM package(s)"
-		rpmbuild --define "_topdir `pwd`/rpmbuild/" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log
+		rpmbuild --define "_topdir `pwd`/rpmbuild" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log
 		if [ "$?" != "0" ]; then
 			echo "-------------------------------------------"
 			echo "rpmbuild failed:"
