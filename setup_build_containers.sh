@@ -52,6 +52,9 @@ for DISTRO in $RPM_DISTROS; do
 	buildah run $IMAGE_NAME $PM install -y redhat-rpm-config rpm-build rpmdevtools createrepo_c rsync
 	if [ "${PM}" == "dnf" ]; then
 		buildah run $IMAGE_NAME dnf install -y 'dnf-command(builddep)'
+		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
+		buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
+		buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
 	fi
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		RNUM=`echo $DISTRO | awk -F: '{print $2}'`
