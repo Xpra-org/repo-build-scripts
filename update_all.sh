@@ -29,7 +29,7 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME rm -fr "/src/repo/.repodata" "/src/repo/repodata" "/src/repo/x86_64"
 		buildah run $IMAGE_NAME mkdir "/src/repo/x86_64"
 		buildah run $IMAGE_NAME createrepo "/src/repo/x86_64/"
-		buildah run $IMAGE_NAME dnf update --disablerepo=repo-local-build -y
+		buildah run $IMAGE_NAME dnf update --disablerepo=repo-local-build --disablerepo=repo-local-source -y
 	else
 		buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 		buildah run $IMAGE_NAME apt-get update
