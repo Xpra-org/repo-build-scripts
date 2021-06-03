@@ -36,9 +36,6 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME apt-get upgrade -y
 		buildah run $IMAGE_NAME apt-get dist-upgrade -y
 		buildah run $IMAGE_NAME apt-get autoremove -y
-		buildah copy $IMAGE_NAME "../debian/control" "/src/control"
-		buildah run $IMAGE_NAME mk-build-deps --install --tool='apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends --yes' /src/control
-		buildah run $IMAGE_NAME apt-get autoremove -y
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
