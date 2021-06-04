@@ -31,7 +31,7 @@ fi
 
 DO_DOWNLOAD="${DO_DOWNLOAD:-1}"
 if [ "${DO_DOWNLOAD}" == "1" ]; then
-	./download_source.sh
+	$BASH ./download_source.sh
 fi
 
 RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 CentOS:7 CentOS:8}
