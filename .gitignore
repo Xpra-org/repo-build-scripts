@@ -1,6 +1,7 @@
 opt/*
 cache/*
 pkgs/*
+repo/*
 
 # eclipse IDE:
 # /
@@ -11,3 +12,4 @@ pkgs/*
 /.idea
 
 *.log
++screenlog.0
