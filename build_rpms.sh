@@ -61,14 +61,14 @@ while read p; do
 	rpmspec -q --rpms ${SPECFILE}
 	while read -r dep; do
 		if [ "$DNF" == "yum" ]; then
-			MATCHES=`repoquery "$dep" --repoid=xpra-local-build 2> /dev/null | wc -l`
+			MATCHES=`repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l`
 		else
-			MATCHES=`$DNF repoquery "$dep" --repo xpra-local-build 2> /dev/null | wc -l`
+			MATCHES=`$DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l`
 			if [ "${MATCHES}" == "0" ]; then
 				#sometimes rpmspec gets confused,
 				#try to find the source package instead:
 				srcdep="${dep/$ARCH/src}"
-				MATCHES=`$DNF repoquery "$srcdep" --repo xpra-local-source 2> /dev/null | wc -l`
+				MATCHES=`$DNF repoquery "$srcdep" --repo repo-local-source 2> /dev/null | wc -l`
 			fi
 		fi
 		if [ "${MATCHES}" != "0" ]; then
