@@ -95,13 +95,24 @@ for DISTRO in $DISTROS; do
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 
-	buildah run \
-				--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
-				--volume ${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z \
-				--volume ${BUILDAH_DIR}/cache:/var/cache:rw,z \
-				--volume $REPO_PATH:/src/repo:noexec,nodev,z \
-				--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
-				--volume ${PACKAGING}/debian:/src/debian:O \
-				$TEMP_IMAGE $BASH -c "DEBUG=${DEBUG} /src/${BUILD_SCRIPT}" |& tee "./${FULL_DISTRO_NAME}.log"
+	if [ ! -z "${RUN_CMD}" ]; then
+		buildah run \
+					--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
+					--volume ${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z \
+					--volume ${BUILDAH_DIR}/cache:/var/cache:rw,z \
+					--volume $REPO_PATH:/src/repo:noexec,nodev,z \
+					--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
+					--volume ${PACKAGING}/debian:/src/debian:O \
+					$TEMP_IMAGE ${RUN_CMD}
+	else
+		buildah run \
+					--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
+					--volume ${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z \
+					--volume ${BUILDAH_DIR}/cache:/var/cache:rw,z \
+					--volume $REPO_PATH:/src/repo:noexec,nodev,z \
+					--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
+					--volume ${PACKAGING}/debian:/src/debian:O \
+					$TEMP_IMAGE $BASH -c "DEBUG=${DEBUG} /src/${BUILD_SCRIPT}" |& tee "./${FULL_DISTRO_NAME}.log"
+	fi
 	buildah rm "${TEMP_IMAGE}"
 done
