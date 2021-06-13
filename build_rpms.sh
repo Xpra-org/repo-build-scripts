@@ -72,7 +72,7 @@ while read p; do
 			fi
 		fi
 		if [ "${MATCHES}" != "0" ]; then
-			echo " * found   ${srcdep}"
+			echo " * found   ${dep}"
 		else
 			echo " * missing ${dep}"
 			if [[ $dep == *debuginfo* ]]; then
