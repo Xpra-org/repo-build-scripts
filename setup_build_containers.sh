@@ -117,6 +117,7 @@ for DISTRO in $DEB_DISTROS; do
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah copy $IMAGE_NAME "01keep-debs" "/etc/apt/apt.conf.d/01keep-debs"
+	buildah copy $IMAGE_NAME "02broken-downloads" "/etc/apt/apt.conf.d/02broken-downloads"
 	#we don't need a local repo yet:
 	#DISTRO_NAME=`echo $DISTRO | awk -F: '{print $2}'`
 	#buildah run $IMAGE_NAME bash -c 'echo "deb file:///repo $DISTRO_NAME main" > /etc/apt/sources.list.d/local-build.list'
