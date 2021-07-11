@@ -85,7 +85,7 @@ while read p; do
 				MISSING="${MISSING} ${dep}"
 			fi
 		fi
-	done < <(rpmspec -q --rpms ${SPECFILE} 2> /dev/null)
+	done < <(rpmspec -q --rpms ${SPECFILE} --define "xpra_revision_no ${XPRA_REVISION}" 2> /dev/null)
 	if [ ! -z "${MISSING}" ]; then
 		echo " need to rebuild $p to get:${MISSING}"
 		echo " - installing build dependencies"
