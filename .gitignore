@@ -12,4 +12,4 @@ repo/*
 /.idea
 
 *.log
-+screenlog.0
+screenlog.*
