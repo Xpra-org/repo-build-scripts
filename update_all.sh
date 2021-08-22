@@ -5,7 +5,7 @@ die() { echo "$*" 1>&2 ; exit 1; }
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 CentOS:8}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:35 CentOS:8}
 DEB_DISTROS=${DEB_DISTROS:-Ubuntu:xenial Ubuntu:bionic Ubuntu:focal Ubuntu:groovy Ubuntu:hirsute Debian:stretch Debian:buster Debian:bullseye Debian:sid}
 if [ -z "${DISTROS}" ]; then
 	DISTROS="$RPM_DISTROS $DEB_DISTROS"
