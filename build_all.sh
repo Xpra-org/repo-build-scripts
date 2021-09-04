@@ -35,7 +35,7 @@ if [ "${DO_DOWNLOAD}" == "1" ]; then
 fi
 
 RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:35 CentOS:7 CentOS:8}
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Debian:stretch Debian:buster Debian:bullseye Debian:sid}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bookworm Debian:sid}
 if [ -z "${DISTROS}" ]; then
 	DISTROS="$RPM_DISTROS $DEB_DISTROS"
 fi

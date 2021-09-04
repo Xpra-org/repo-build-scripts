@@ -80,7 +80,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Debian:stretch Debian:buster Debian:bullseye Debian:sid}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bookworm Debian:sid}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
@@ -114,6 +114,7 @@ for DISTRO in $DEB_DISTROS; do
 		buildah run $IMAGE_NAME apt-add-repository non-free -y
 	fi
 	buildah run $IMAGE_NAME apt-get update
+	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah copy $IMAGE_NAME "01keep-debs" "/etc/apt/apt.conf.d/01keep-debs"
