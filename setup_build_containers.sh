@@ -117,7 +117,7 @@ for DISTRO in $DEB_DISTROS; do
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get upgrade -y
 	buildah run $IMAGE_NAME apt-get dist-upgrade -y
-	buildah run $IMAGE_NAME apt-get install -y software-properties-common
+	buildah run $IMAGE_NAME apt-get install -y software-properties-common xz-utils
 	echo "${DISTRO}" | grep "Ubuntu" > /dev/null
 	if [ "$?" == "0" ]; then
 		#the codecs require the "universe" repository:
