@@ -7,16 +7,6 @@ if [ "${DEBUG:-0}" == "1" ]; then
 	BASH="bash -x"
 fi
 
-#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG,
-#this is only enabled by default on x86_64:
-if [ -z "${NVIDIA_CODECS}" ]; then
-	if [ `arch` == "x86_64" ]; then
-		NVIDIA_CODECS=1
-	else
-		NVIDIA_CODECS=0
-	fi
-fi
-
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 cd ${BUILDAH_DIR}
 
@@ -34,7 +24,7 @@ if [ "${DO_DOWNLOAD}" == "1" ]; then
 	$BASH ./download_source.sh
 fi
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:35 CentOS:7 CentOS:8}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64}
 DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bookworm Debian:sid}
 if [ -z "${DISTROS}" ]; then
 	DISTROS="$RPM_DISTROS $DEB_DISTROS"
@@ -47,6 +37,11 @@ for DISTRO in $DISTROS; do
 	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
 	DISTRO_NAME=`echo ${DISTRO,,} | awk -F: '{print $1}'`
 	IMAGE_NAME="$FULL_DISTRO_NAME-repo-build"
+	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	if [ -z "${ARCH}" ]; then
+		ARCH="x86_64"
+	fi
+	DISTRO_ARCH_NAME="${DISTRO_NAME}-${ARCH}"
 
 	#use a temp image:
 	TEMP_IMAGE="$IMAGE_NAME-temp"
@@ -54,17 +49,17 @@ for DISTRO in $DISTROS; do
 	buildah rmi "${TEMP_IMAGE}" >& /dev/null
 	buildah from --pull-never --name  $TEMP_IMAGE $IMAGE_NAME
 	if [ "$?" != "0" ]; then
-		echo "cannot build $DISTRO: image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
+		echo "cannot build $DISTRO : image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
 		continue
 	fi
-	echo $DISTRO : $IMAGE_NAME
+	echo "$DISTRO : $IMAGE_NAME"
 	buildah run $TEMP_IMAGE mkdir -p /opt /src/repo /src/pkgs src/rpm /src/debian /var/cache/dnf
-	echo $DISTRO | egrep -iv "fedora|centos" >& /dev/null
+	echo "$DISTRO" | egrep -iv "fedora|centos" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		LIB="/usr/lib64"
 		REPO_PATH="${BUILDAH_DIR}/repo/"`echo $DISTRO | sed 's+:+/+g'`
-		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_NAME}-rpms.txt" "rpms.txt"; do
+		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
 			if [ -r "${PACKAGING}/rpm/${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/${rpm_list}`
 				echo " using rpm package list from ${rpm_list_path}"
@@ -84,6 +79,15 @@ for DISTRO in $DISTROS; do
 	buildah copy $TEMP_IMAGE "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}"
 	mkdir -p $REPO_PATH >& /dev/null
 
+	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG,
+	#this is only enabled by default on x86_64:
+	if [ -z "${NVIDIA_CODECS}" ]; then
+		if [ "${ARCH}" == "x86_64" ]; then
+			NVIDIA_CODECS=1
+		else
+			NVIDIA_CODECS=0
+		fi
+	fi
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
 		PKGCONFIG="${LIB}/pkgconfig"
 		buildah copy $IMAGE_NAME "./nvenc.pc" "${PKGCONFIG}/nvenc.pc"

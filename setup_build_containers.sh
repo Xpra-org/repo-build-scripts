@@ -10,7 +10,8 @@ fi
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:35 CentOS:7 CentOS:8}
+#arm64 builds require qemu-aarch64-static
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64}
 for DISTRO in $RPM_DISTROS; do
 	DISTRO_LOWER="${DISTRO,,}"
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
@@ -26,11 +27,17 @@ for DISTRO in $RPM_DISTROS; do
 	if [ "${DISTRO}" == "CentOS:7" ]; then
 		PM="yum"
 	fi
+	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	if [ -z "${ARCH}" ]; then
+		ARCH="x86_64"
+	fi
+	#remove $ARCH:
+	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
 	echo
 	echo "********************************************************************************"
 	echo "creating ${IMAGE_NAME}"
 	#docker names are lowercase:
-	buildah from --name $IMAGE_NAME $DISTRO_LOWER
+	buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
 	if [ "$?" != "0" ]; then
 		echo "Warning: failed to create image $IMAGE_NAME"
 		continue
@@ -80,7 +87,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bookworm Debian:sid}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:hirsute Ubuntu:hirsute:arm64 Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:sid}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
@@ -95,17 +102,23 @@ for DISTRO in $DEB_DISTROS; do
 		echo "${IMAGE_NAME} already exists"
 		continue
 	fi
+	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	if [ -z "${ARCH}" ]; then
+		ARCH="x86_64"
+	fi
+	#remove $ARCH:
+	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
 	echo
 	echo "********************************************************************************"
 	echo "creating ${IMAGE_NAME}"
 	#docker names are lowercase:
-	buildah from --name $IMAGE_NAME $DISTRO_LOWER
+	buildah from --arch "${ARCH}" --name "$IMAGE_NAME" "$DISTRO_NOARCH"
 	buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get upgrade -y
 	buildah run $IMAGE_NAME apt-get dist-upgrade -y
 	buildah run $IMAGE_NAME apt-get install -y software-properties-common
-	echo "${DISTRO}" | grep Ubuntu > /dev/null
+	echo "${DISTRO}" | grep "Ubuntu" > /dev/null
 	if [ "$?" == "0" ]; then
 		#the codecs require the "universe" repository:
 		buildah run $IMAGE_NAME add-apt-repository universe -y
