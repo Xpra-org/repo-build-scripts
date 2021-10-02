@@ -88,7 +88,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah copy $IMAGE_NAME "./local-build.repo" "/etc/yum.repos.d/"
-	buildah run $IMAGE_NAME createrepo_c "/src/repo/"
+	buildah run $IMAGE_NAME createrepo "/src/repo/"
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
