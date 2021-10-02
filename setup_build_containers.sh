@@ -24,8 +24,10 @@ for DISTRO in $RPM_DISTROS; do
 		continue
 	fi
 	PM="dnf"
+	createrepo="createrepo_c"
 	if [ "${DISTRO}" == "CentOS:7" ]; then
 		PM="yum"
+		createrepo="createrepo"
 	fi
 	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
 	if [ -z "${ARCH}" ]; then
@@ -56,7 +58,7 @@ for DISTRO in $RPM_DISTROS; do
 		done
 	fi
 	buildah run $IMAGE_NAME $PM update -y
-	buildah run $IMAGE_NAME $PM install -y redhat-rpm-config rpm-build rpmdevtools createrepo_c rsync
+	buildah run $IMAGE_NAME $PM install -y redhat-rpm-config rpm-build rpmdevtools ${createrepo} rsync
 	if [ "${PM}" == "dnf" ]; then
 		buildah run $IMAGE_NAME dnf install -y 'dnf-command(builddep)'
 		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
