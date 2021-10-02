@@ -33,15 +33,21 @@ fi
 for DISTRO in $DISTROS; do
 	echo
 	echo "********************************************************************************"
-	#ie: DISTRO_NAME="fedora-33"
+	#ie: DISTRO="Fedora:35:arm64"
+	# DISTRO_NAME="fedora-35-arm64"
 	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
-	DISTRO_NAME=`echo ${DISTRO,,} | awk -F: '{print $1}'`
-	IMAGE_NAME="$FULL_DISTRO_NAME-repo-build"
-	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	#split parts:
+	#1=Fedora
+	DISTRO_NAME=`echo ${DISTRO} | awk -F: '{print $1}'`
+	#2=35
+	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
+	#3=arm64
+	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
-	DISTRO_ARCH_NAME="${DISTRO_NAME}-${ARCH}"
+	#ie: fedora-35-arm64-repo-build
+	IMAGE_NAME="$FULL_DISTRO_NAME-repo-build"
 
 	#use a temp image:
 	TEMP_IMAGE="$IMAGE_NAME-temp"
@@ -58,8 +64,9 @@ for DISTRO in $DISTROS; do
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		LIB="/usr/lib64"
-		REPO_PATH="${BUILDAH_DIR}/repo/"`echo $DISTRO | sed 's+:+/+g'`
-		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
+		REPO_PATH="${BUILDAH_DIR}/repo/${DISTRO_NAME}/${DISTRO_VARIANT}"
+		DISTRO_ARCH_NAME="${DISTRO_NAME,,}-${ARCH,,}"
+		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME,,}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
 			if [ -r "${PACKAGING}/rpm/${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/${rpm_list}`
 				echo " using rpm package list from ${rpm_list_path}"
