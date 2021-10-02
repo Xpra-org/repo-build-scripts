@@ -13,16 +13,13 @@ pushd ${BUILDAH_DIR}
 #arm64 builds require qemu-aarch64-static
 RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64}
 for DISTRO in $RPM_DISTROS; do
+	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
 	    echo "skipped $DISTRO"
 	    continue
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
-	podman image exists $IMAGE_NAME
-	if [ "$?" == "0" ]; then
-		continue
-	fi
 	PM="dnf"
 	createrepo="createrepo_c"
 	if [ "${DISTRO}" == "CentOS:7" ]; then
@@ -37,12 +34,18 @@ for DISTRO in $RPM_DISTROS; do
 	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
 	echo
 	echo "********************************************************************************"
-	echo "creating ${IMAGE_NAME}"
-	#docker names are lowercase:
-	buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
-	if [ "$?" != "0" ]; then
-		echo "Warning: failed to create image $IMAGE_NAME"
-		continue
+	podman image exists $IMAGE_NAME
+	if [ "$?" == "0" ]; then
+		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
+			continue
+		fi
+	else
+		echo "creating ${IMAGE_NAME}"
+		buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
+		if [ "$?" != "0" ]; then
+			echo "Warning: failed to create image $IMAGE_NAME"
+			continue
+		fi
 	fi
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		#first install the config-manager plugin,
@@ -93,17 +96,13 @@ DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
+	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
 	    echo "skipped $DISTRO"
 	    continue
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | sed 's/:/-/g'`-repo-build"
-	podman image exists $IMAGE_NAME
-	if [ "$?" == "0" ]; then
-		echo "${IMAGE_NAME} already exists"
-		continue
-	fi
 	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
@@ -112,9 +111,16 @@ for DISTRO in $DEB_DISTROS; do
 	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
 	echo
 	echo "********************************************************************************"
-	echo "creating ${IMAGE_NAME}"
-	#docker names are lowercase:
-	buildah from --arch "${ARCH}" --name "$IMAGE_NAME" "$DISTRO_NOARCH"
+	podman image exists $IMAGE_NAME
+	if [ "$?" == "0" ]; then
+		echo "${IMAGE_NAME} already exists"
+		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
+			continue
+		fi
+	else
+		echo "creating ${IMAGE_NAME}"
+		buildah from --arch "${ARCH}" --name "$IMAGE_NAME" "$DISTRO_NOARCH"
+	fi
 	buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get upgrade -y
