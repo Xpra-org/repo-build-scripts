@@ -66,23 +66,24 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	buildah run $IMAGE_NAME $PM update -y
 	buildah run $IMAGE_NAME $PM install -y redhat-rpm-config rpm-build rpmdevtools ${createrepo} rsync
-	if [ "${PM}" == "dnf" ]; then
-		buildah run $IMAGE_NAME dnf install -y 'dnf-command(builddep)'
+	if [ "DISTRO_VARIANT" != "7" ]; then
+		buildah run $IMAGE_NAME $PM install -y 'dnf-command(builddep)'
 		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
 	fi
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		RNUM=`echo $DISTRO | awk -F: '{print $2}'`
-		dnf -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
+		$PM -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		buildah run $IMAGE_NAME ${PM} install -y rpmspectool
 	else
 		#centos8
 		if [ "${DISTRO_VARIANT}" == "8" ]; then
 			#some of the packages we need for building are in the "PowerTools" repository:
+			buildah run $IMAGE_NAME $PM install -y 'dnf-command(config-manager)'
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
 			#no "rpmspectool" package on CentOS 8, use setuptools to install it:
-			buildah run $IMAGE_NAME dnf install -y python3-setuptools
+			buildah run $IMAGE_NAME $PM install -y python3-setuptools
 			buildah run $IMAGE_NAME easy_install-3.6 python-rpm-spec
 		fi
 	fi
