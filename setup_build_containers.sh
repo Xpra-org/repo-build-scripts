@@ -15,6 +15,7 @@ RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:
 for DISTRO in $RPM_DISTROS; do
 	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
+	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
 	    echo "skipped $DISTRO"
 	    continue
@@ -76,8 +77,8 @@ for DISTRO in $RPM_DISTROS; do
 		dnf -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		buildah run $IMAGE_NAME ${PM} install -y rpmspectool
 	else
-		#centos8:
-		if [ "${PM}" == "dnf" ]; then
+		#centos8
+		if [ "${DISTRO_VARIANT}" == "8" ]; then
 			#some of the packages we need for building are in the "PowerTools" repository:
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
 			#no "rpmspectool" package on CentOS 8, use setuptools to install it:
