@@ -73,7 +73,7 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		RNUM=`echo $DISTRO | awk -F: '{print $2}'`
-		dnf -y makecache --releasever=$RNUM --setopt=cachedir=/var/cache/dnf/$RNUM
+		dnf -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		buildah run $IMAGE_NAME ${PM} install -y rpmspectool
 	else
 		#centos8:
