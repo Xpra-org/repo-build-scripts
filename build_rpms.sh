@@ -64,12 +64,6 @@ while read p; do
 			MATCHES=`repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l`
 		else
 			MATCHES=`$DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l`
-			if [ "${MATCHES}" == "0" ]; then
-				#sometimes rpmspec gets confused,
-				#try to find the source package instead:
-				srcdep="${dep/$ARCH/src}"
-				MATCHES=`$DNF repoquery "$srcdep" --repo repo-local-source 2> /dev/null | wc -l`
-			fi
 		fi
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
