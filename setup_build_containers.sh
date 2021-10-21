@@ -27,7 +27,7 @@ for DISTRO in $RPM_DISTROS; do
 		PM="yum"
 		createrepo="createrepo"
 	fi
-	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
