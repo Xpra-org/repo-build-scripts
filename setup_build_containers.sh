@@ -108,7 +108,7 @@ for DISTRO in $DEB_DISTROS; do
 	    continue
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | sed 's/:/-/g'`-repo-build"
-	ARCH=`echo $DISTRO | sed 's+.*:.*:++g'`
+	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
