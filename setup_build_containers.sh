@@ -29,7 +29,7 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
-		ARCH="x86_64"
+		ARCH="amd64"
 	fi
 	#remove $ARCH:
 	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
@@ -110,7 +110,7 @@ for DISTRO in $DEB_DISTROS; do
 	IMAGE_NAME="`echo $DISTRO_LOWER | sed 's/:/-/g'`-repo-build"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
-		ARCH="x86_64"
+		ARCH="amd64"
 	fi
 	#remove $ARCH:
 	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
