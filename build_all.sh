@@ -70,7 +70,8 @@ for DISTRO in $DISTROS; do
 		LIB="/usr/lib64"
 		REPO_PATH="${BUILDAH_DIR}/repo/${DISTRO_NAME}/${DISTRO_VARIANT}"
 		DISTRO_ARCH_NAME="${DISTRO_NAME,,}-${ARCH,,}"
-		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME,,}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
+		DISTRO_VARIANT_NAME="${DISTRO_NAME,,}-${DISTRO_VARIANT,,}"
+		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_VARIANT_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME,,}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
 			if [ -r "${PACKAGING}/rpm/${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/${rpm_list}`
 				echo " using rpm package list from ${rpm_list_path}"
