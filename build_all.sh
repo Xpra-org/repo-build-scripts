@@ -24,7 +24,7 @@ if [ "${DO_DOWNLOAD}" == "1" ]; then
 	$BASH ./download_source.sh
 fi
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64 CentOS:stream9}
 DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:hirsute Ubuntu:hirsute:arm64 Ubuntu:impish Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:sid}
 #ie for building all distros supported by the xpra 4.2.x branch (without arm64):
 #DISTROS="Fedora:33 Fedora:34 Fedora:35 CentOS:8 Ubuntu:bionic Ubuntu:focal Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:bullseye Debian:bookworm Debian:sid"

@@ -5,7 +5,7 @@ die() { echo "$*" 1>&2 ; exit 1; }
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:8 CentOS:8:arm64}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:8 CentOS:8:arm64 CentOS:stream9}
 DEB_DISTROS=${DEB_DISTROS:-Ubuntu:xenial Ubuntu:bionic Ubuntu:focal Ubuntu:groovy Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bookworm Debian:sid}
 if [ -z "${DISTROS}" ]; then
 	DISTROS="$RPM_DISTROS $DEB_DISTROS"
@@ -37,5 +37,5 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME apt-get dist-upgrade -y
 		buildah run $IMAGE_NAME apt-get autoremove -y
 	fi
-	buildah commit $IMAGE_NAME $IMAGE_NAME
+	buildah commit --squash $IMAGE_NAME $IMAGE_NAME
 done

@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:7 CentOS:8 CentOS:8:arm64 CentOS:stream9}
 for DISTRO in $RPM_DISTROS; do
 	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
@@ -71,20 +71,17 @@ for DISTRO in $RPM_DISTROS; do
 		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
-	fi
-	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
-		RNUM=`echo $DISTRO | awk -F: '{print $2}'`
-		$PM -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
-		buildah run $IMAGE_NAME ${PM} install -y rpmspectool
-	else
-		#centos8
-		if [ "${DISTRO_VARIANT}" == "8" ]; then
-			#some of the packages we need for building are in the "PowerTools" repository:
-			buildah run $IMAGE_NAME $PM install -y 'dnf-command(config-manager)'
-			buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
-			#no "rpmspectool" package on CentOS 8, use setuptools to install it:
-			buildah run $IMAGE_NAME $PM install -y python3-setuptools
-			buildah run $IMAGE_NAME easy_install-3.6 python-rpm-spec
+		if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
+			#the easy way on Fedora which has an 'rpmspectool' package:
+			buildah run $IMAGE_NAME ${PM} install -y rpmspectool
+			#generate dnf cache:
+			RNUM=`echo $DISTRO | awk -F: '{print $2}'`
+			$PM -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
+		else
+			#CentOS 8 and later:
+			#there is no "rpmspectool" package so we have to use pip to install it:
+			buildah run $IMAGE_NAME $PM install -y python3-pip
+			buildah run $IMAGE_NAME pip3 install python-rpm-spec
 		fi
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
