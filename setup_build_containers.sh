@@ -27,7 +27,6 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
 	PM="dnf"
-	PM_CMD="$PM"
 	createrepo="createrepo_c"
 	if [ "${DISTRO_NAME}" == "CentOS" ]; then
 		if [ "${DISTRO_VARIANT}" == "7" ] || [[ "${DISTRO_VARIANT}" == "centos7."* ]]; then
@@ -35,6 +34,7 @@ for DISTRO in $RPM_DISTROS; do
 			createrepo="createrepo"
 		fi
 	fi
+	PM_CMD="$PM"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="amd64"
