@@ -6,7 +6,7 @@ if [ "$?" == "0" ]; then
 else
 	DNF="${DNF:-yum}"
 fi
-createrepo_c --version
+createrepo_c --version >& /dev/null
 if [ "$?" == "0" ]; then
 	CREATEREPO="${CREATEREPO:-createrepo_c}"
 else
