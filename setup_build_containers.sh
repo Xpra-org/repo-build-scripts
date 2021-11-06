@@ -15,6 +15,7 @@ RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:
 for DISTRO in $RPM_DISTROS; do
 	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
+	DISTRO_NAME=`echo ${DISTRO} | awk -F: '{print $1}'`
 	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
 	    echo "skipped $DISTRO"
@@ -22,10 +23,13 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
 	PM="dnf"
+	PM_CMD="$PM"
 	createrepo="createrepo_c"
-	if [ "${DISTRO}" == "CentOS:7" ]; then
-		PM="yum"
-		createrepo="createrepo"
+	if [ "${DISTRO_NAME}" == "CentOS" ]; then
+		if [ "${DISTRO_VARIANT}" == "7" ] | [[ "${DISTRO_VARIANT}" == "centos7."* ]]; then
+			PM="yum"
+			createrepo="createrepo"
+		fi
 	fi
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
@@ -42,7 +46,7 @@ for DISTRO in $RPM_DISTROS; do
 		fi
 		#make sure to skip the local repositories,
 		#which may or may not be in a usable state:
-		PM="$PM --disablerepo=repo-local-source --disablerepo=repo-local-build"
+		PM_CMD="$PM --disablerepo=repo-local-source --disablerepo=repo-local-build"
 	else
 		echo "creating ${IMAGE_NAME}"
 		buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
@@ -64,23 +68,23 @@ for DISTRO in $RPM_DISTROS; do
 			buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo
 		done
 	fi
-	buildah run $IMAGE_NAME $PM update -y
-	buildah run $IMAGE_NAME $PM install -y redhat-rpm-config rpm-build rpmdevtools ${createrepo} rsync
-	if [ "DISTRO_VARIANT" != "7" ]; then
-		buildah run $IMAGE_NAME $PM install -y 'dnf-command(builddep)'
+	buildah run $IMAGE_NAME $PM_CMD update -y
+	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools ${createrepo} rsync
+	if [ "$PM" == "dnf" ]; then
+		buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
 		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
 		buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
 		if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 			#the easy way on Fedora which has an 'rpmspectool' package:
-			buildah run $IMAGE_NAME ${PM} install -y rpmspectool
+			buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool
 			#generate dnf cache:
 			RNUM=`echo $DISTRO | awk -F: '{print $2}'`
-			$PM -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
+			$PM_CMD -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		else
 			#CentOS 8 and later:
 			#there is no "rpmspectool" package so we have to use pip to install it:
-			buildah run $IMAGE_NAME $PM install -y python3-pip
+			buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
 			buildah run $IMAGE_NAME pip3 install python-rpm-spec
 		fi
 	fi

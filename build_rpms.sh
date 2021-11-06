@@ -6,6 +6,12 @@ if [ "$?" == "0" ]; then
 else
 	DNF="${DNF:-yum}"
 fi
+createrepo_c --version
+if [ "$?" == "0" ]; then
+	CREATEREPO="${CREATEREPO:-createrepo_c}"
+else
+	CREATEREPO="${CREATEREPO:-createrepo}"
+fi
 
 if [ `id -u` != "0" ]; then
 	if [ "${DNF}" == "dnf" ]; then
@@ -18,7 +24,7 @@ for dir in "./repo/SRPMS" "./repo/$ARCH"; do
 	echo "* (re)creating repodata in $dir"
 	mkdir $dir 2> /dev/null
 	rm -fr $dir/repodata
-	createrepo_c $dir > /dev/null
+	${CREATEREPO} $dir > /dev/null
 done
 
 #if we are going to build xpra,
@@ -116,7 +122,7 @@ while read p; do
 		#update the local repo:
 		echo " - re-creating repository metadata"
 		for dir in "./repo/SRPMS" "./repo/$ARCH"; do
-			createrepo_c $dir >& createrepo.log
+			${CREATEREPO} $dir >& createrepo.log
 			if [ "$?" != "0" ]; then
 				echo "-------------------------------------------"
 				echo "'createrepo $dir' failed"

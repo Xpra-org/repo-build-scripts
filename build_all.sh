@@ -45,6 +45,9 @@ for DISTRO in $DISTROS; do
 	DISTRO_NAME=`echo ${DISTRO} | awk -F: '{print $1}'`
 	#2=35
 	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
+	#strip centos from distro variant:
+	#ie: centos7.6.1801 -> 7.6.1801
+	DISTRO_VARIANT="${DISTRO_VARIANT#centos}"
 	#3=arm64
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
