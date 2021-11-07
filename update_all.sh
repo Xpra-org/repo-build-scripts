@@ -5,17 +5,15 @@ die() { echo "$*" 1>&2 ; exit 1; }
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
-RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 CentOS:8 CentOS:8:arm64 CentOS:stream9}
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:xenial Ubuntu:bionic Ubuntu:focal Ubuntu:groovy Ubuntu:hirsute Ubuntu:impish Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bookworm Debian:sid}
 if [ -z "${DISTROS}" ]; then
-	DISTROS="$RPM_DISTROS $DEB_DISTROS"
+	#update all the '-repo-build' images we find:
+	DISTROS=`buildah images | grep '\-repo-build' | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g'`
 fi
 
 for DISTRO in $DISTROS; do
 	#ie: DISTRO_NAME="fedora-33"
-	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
-	DISTRO_NAME=`echo ${DISTRO,,} | awk -F: '{print $1}'`
-	IMAGE_NAME="$FULL_DISTRO_NAME-repo-build"
+	DISTRO_NAME=`echo ${DISTRO} | awk -F- '{print $1}'`
+	IMAGE_NAME="$DISTRO-repo-build"
 
 	COUNT=`buildah images | grep "$IMAGE_NAME " | wc -l`
 	if [ "${COUNT}" != "1" ]; then
@@ -29,7 +27,13 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME rm -fr "/src/repo/.repodata" "/src/repo/repodata" "/src/repo/x86_64"
 		buildah run $IMAGE_NAME mkdir "/src/repo/x86_64"
 		buildah run $IMAGE_NAME createrepo "/src/repo/x86_64/"
-		buildah run $IMAGE_NAME dnf update --disablerepo=repo-local-build --disablerepo=repo-local-source -y
+		echo $DISTRO | egrep -i "centos7|centos-7" >& /dev/null
+		if [ "$?" == "0" ]; then
+			PM="yum"
+		else
+			PM="dnf"
+		fi
+		buildah run $IMAGE_NAME $PM update --disablerepo=repo-local-build --disablerepo=repo-local-source -y
 	else
 		buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 		buildah run $IMAGE_NAME apt-get update
