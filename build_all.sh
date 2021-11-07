@@ -73,8 +73,21 @@ for DISTRO in $DISTROS; do
 		LIB="/usr/lib64"
 		REPO_PATH="${BUILDAH_DIR}/repo/${DISTRO_NAME}/${DISTRO_VARIANT}"
 		DISTRO_ARCH_NAME="${DISTRO_NAME,,}-${ARCH,,}"
-		DISTRO_VARIANT_NAME="${DISTRO_NAME,,}-${DISTRO_VARIANT,,}"
-		for rpm_list in "${FULL_DISTRO_NAME}-rpms.txt" "${DISTRO_VARIANT_NAME}-rpms.txt" "${DISTRO_ARCH_NAME}-rpms.txt" "${DISTRO_NAME,,}-rpms.txt" "${ARCH}-rpms.txt" "rpms.txt"; do
+		RPM_LIST_OPTIONS="${FULL_DISTRO_NAME}-rpms.txt"
+		variant="${DISTRO_VARIANT,,}"
+		while [ ! -z "$variant" ]; do
+			#ie: CentOS-7.6.1801
+			RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_NAME,,}-${variant}-rpms.txt"
+			#strip everything after the last dot:
+			#ie: '7.6.1801' -> '7.6' -> '7' -> ''
+			new_variant="${variant%.*}"
+			if [ "$new_variant" == "$variant" ]; then
+				break
+			fi
+			variant="$new_variant"
+		done
+		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_ARCH_NAME}-rpms.txt ${DISTRO_NAME,,}-rpms.txt ${ARCH}-rpms.txt rpms.txt" 
+		for rpm_list in ${RPM_LIST_OPTIONS}; do
 			if [ -r "${PACKAGING}/rpm/${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/${rpm_list}`
 				echo " using rpm package list from ${rpm_list_path}"
