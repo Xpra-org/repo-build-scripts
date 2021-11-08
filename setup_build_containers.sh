@@ -15,7 +15,7 @@ RPM_DISTROS=${RPM_DISTROS:-Fedora:33 Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:
 #other distros we can build for:
 # CentOS:centos7.6.1810 CentOS:centos7.7.1908 CentOS:centos7.8.2003 CentOS:centos7.9:2009
 # CentOS:stream8
-# CentOS:centos8.3.2011 CentOS:centos8.4.2105
+# CentOS:centos8.3.2011 CentOS:8.4.2105
 for DISTRO in $RPM_DISTROS; do
 	#docker names are lowercase:
 	DISTRO_LOWER="${DISTRO,,}"
