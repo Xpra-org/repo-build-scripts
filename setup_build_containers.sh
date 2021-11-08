@@ -27,12 +27,11 @@ for DISTRO in $RPM_DISTROS; do
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
 	PM="dnf"
-	createrepo="createrepo_c"
-	if [ "${DISTRO_NAME}" == "CentOS" ]; then
-		if [ "${DISTRO_VARIANT}" == "7" ] || [[ "${DISTRO_VARIANT}" == "centos7."* ]]; then
-			PM="yum"
-			createrepo="createrepo"
-		fi
+	CREATEREPO="createrepo"
+	echo $DISTRO | egrep -qi "centos:7|centos-7|centos7"
+	if [ "$?" == "0" ]; then
+		PM="yum"
+		#createrepo="createrepo_c"
 	fi
 	PM_CMD="$PM"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
@@ -73,7 +72,7 @@ for DISTRO in $RPM_DISTROS; do
 		done
 	fi
 	buildah run $IMAGE_NAME $PM_CMD update -y
-	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools ${createrepo} rsync
+	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync
 	if [ "$PM" == "dnf" ]; then
 		buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
 		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
@@ -93,12 +92,12 @@ for DISTRO in $RPM_DISTROS; do
 		fi
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
-	#buildah run dnf clean all
+	#buildah run $PM clean all
 
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah copy $IMAGE_NAME "./local-build.repo" "/etc/yum.repos.d/"
-	buildah run $IMAGE_NAME createrepo "/src/repo/"
+	buildah run $IMAGE_NAME ${CREATEREPO} "/src/repo/"
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
