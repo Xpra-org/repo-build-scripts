@@ -28,7 +28,7 @@ for DISTRO in $DISTROS; do
 		PM="dnf"
 		echo $DISTRO | egrep -qi "centos:7|centos-7|centos7"
 		if [ "$?" == "0" ]; then
-			#CREATEREPO="createrepo_c"
+			CREATEREPO="createrepo_c"
 			PM="yum"
 		fi
 
