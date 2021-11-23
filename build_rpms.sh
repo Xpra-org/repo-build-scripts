@@ -131,6 +131,6 @@ while read p; do
 			fi
 		done
 		echo " - updating local packages"
-		$DNF update -y
+		$DNF update -y --disablerepo=* --enablerepo=repo-local-build
 	fi
 done <./rpms.txt

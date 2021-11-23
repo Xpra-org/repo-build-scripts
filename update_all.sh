@@ -7,7 +7,7 @@ pushd ${BUILDAH_DIR}
 
 if [ -z "${DISTROS}" ]; then
 	#update all the '-repo-build' images we find:
-	DISTROS=`buildah images | grep '\-repo-build' | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | sort -V`
+	DISTROS=`buildah images | grep '\-repo-build' | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vqF "." | sort -V`
 fi
 
 for DISTRO in $DISTROS; do

@@ -71,7 +71,12 @@ for DISTRO in $RPM_DISTROS; do
 			buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo
 		done
 	fi
-	buildah run $IMAGE_NAME $PM_CMD update -y
+	#don't update distros with a minor number:
+	#(ie: CentOS:8.2.2004)
+	echo $DISTRO | grep -vqF "."
+	if [ "$?" == "0" ]; then
+		buildah run $IMAGE_NAME $PM_CMD update -y
+	fi
 	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync
 	if [ "$PM" == "dnf" ]; then
 		buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
