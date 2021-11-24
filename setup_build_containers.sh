@@ -95,7 +95,9 @@ for DISTRO in $RPM_DISTROS; do
 			buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
 			buildah run $IMAGE_NAME pip3 install python-rpm-spec
 			#some builds require PowerTools:
+			#try different spellings because they've made it case sensitive and renamed the repo..
 			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
+			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled powertools
 		fi
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
