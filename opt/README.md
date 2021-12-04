@@ -4,7 +4,8 @@ This is used for enabling NVIDIA's proprietary bits.
 
 Simply install:
 * CUDA from https://developer.nvidia.com/cuda-downloads into:
-opt/cuda
+opt/cuda-x86_64
+opt/cuda-arm64
 * NVIDIA Video Codec SDK from https://developer.nvidia.com/nvidia-video-codec-sdk into:
 opt/nvenc
 * NVIDIA Capture SDK from https://developer.nvidia.com/capture-sdk into:

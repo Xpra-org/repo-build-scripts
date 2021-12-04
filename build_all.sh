@@ -127,6 +127,12 @@ for DISTRO in $DISTROS; do
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 
+	#manage ./opt/cuda as a symlink to the arch specific version:
+	pushd opt
+	rm -f cuda
+	ln -sf cuda-$ARCH cuda
+	popd
+
 	if [ ! -z "${RUN_CMD}" ]; then
 		buildah run \
 					--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
