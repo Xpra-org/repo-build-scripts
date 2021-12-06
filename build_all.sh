@@ -122,7 +122,7 @@ for DISTRO in $DISTROS; do
 			fi
 		fi
 		for pc_file in ${NVIDIA_PC_FILES}; do
-			buildah copy $IMAGE_NAME "./$pc_file.pc" "${LIB}/pkgconfig/nvenc.pc"
+			buildah copy $IMAGE_NAME "./$pc_file.pc" "${LIB}/pkgconfig/$pc_file.pc"
 		done
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
