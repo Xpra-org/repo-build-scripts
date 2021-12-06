@@ -107,23 +107,23 @@ for DISTRO in $DISTROS; do
 	buildah copy $TEMP_IMAGE "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}"
 	mkdir -p $REPO_PATH >& /dev/null
 
-	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG,
-	#this is only enabled by default on x86_64:
-	if [ -z "${NVIDIA_CODECS}" ]; then
-		if [ "${ARCH}" == "x86_64" ]; then
-			NVIDIA_CODECS=1
-		else
-			NVIDIA_CODECS=0
-		fi
-	fi
+	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
+	NVIDIA_CODECS="${NVIDIA_CODECS:-1}"
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
-		PKGCONFIG="${LIB}/pkgconfig"
-		buildah copy $IMAGE_NAME "./nvenc.pc" "${PKGCONFIG}/nvenc.pc"
-		buildah copy $IMAGE_NAME "./nvfbc.pc" "${PKGCONFIG}/nvfbc.pc"
-		buildah copy $IMAGE_NAME "./nvjpeg.pc" "${PKGCONFIG}/nvjpeg.pc"
-		buildah copy $IMAGE_NAME "./cuda.pc" "${PKGCONFIG}/cuda.pc"
-		#no libnvidia-fbc in the standard repos, so use the local one:
-		buildah copy $IMAGE_NAME /usr/lib64/libnvidia-fbc.so.*.* "$LIB/libnvidia-fbc.so"
+		if [ -z "${NVIDIA_PC_FILES}" ]; then
+			NVIDIA_PC_FILES=""
+			if [ "${ARCH}" == "x86_64" ]; then
+				NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
+				#no libnvidia-fbc in the standard repos, so use the local one:
+				buildah copy $IMAGE_NAME /usr/lib64/libnvidia-fbc.so.*.* "$LIB/libnvidia-fbc.so"
+			fi
+			if [ "${ARCH}" == "arm64" ]; then
+				NVIDIA_PC_FILES="cuda nvenc nvjpeg"
+			fi
+		fi
+		for pc_file in ${NVIDIA_PC_FILES}; do
+			buildah copy $IMAGE_NAME "./$pc_file.pc" "${LIB}/pkgconfig/nvenc.pc"
+		done
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 
