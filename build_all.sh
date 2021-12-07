@@ -60,13 +60,13 @@ for DISTRO in $DISTROS; do
 	TEMP_IMAGE="$IMAGE_NAME-temp"
 	buildah rm "${TEMP_IMAGE}" >& /dev/null
 	buildah rmi "${TEMP_IMAGE}" >& /dev/null
-	buildah from --pull-never --name  $TEMP_IMAGE $IMAGE_NAME
+	buildah from --pull-never --name  $TEMP_IMAGE $IMAGE_NAME || die "failed to pull image $IMAGE_NAME"
 	if [ "$?" != "0" ]; then
 		echo "cannot build $DISTRO : image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
 		continue
 	fi
 	echo "$DISTRO : $IMAGE_NAME"
-	buildah run $TEMP_IMAGE mkdir -p /opt /src/repo /src/pkgs src/rpm /src/debian /var/cache/dnf
+	buildah run $TEMP_IMAGE mkdir -p /opt /src/repo /src/pkgs src/rpm /src/debian /var/cache/dnf || die "failed to create directories"
 	echo "$DISTRO" | egrep -iv "fedora|centos" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
@@ -91,7 +91,7 @@ for DISTRO in $DISTROS; do
 			if [ -r "${PACKAGING}/rpm/${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/${rpm_list}`
 				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.txt"
+				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.txt" || die "failed to copy rpms.txt list"
 				break
 			fi
 		done
@@ -104,7 +104,7 @@ for DISTRO in $DISTROS; do
 		BUILD_SCRIPT="build_debs.sh"
 		echo "DEB: $REPO_PATH"
 	fi
-	buildah copy $TEMP_IMAGE "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}"
+	buildah copy $TEMP_IMAGE "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}" || die "failed to copy build script"
 	mkdir -p $REPO_PATH >& /dev/null
 
 	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
@@ -115,7 +115,7 @@ for DISTRO in $DISTROS; do
 			if [ "${ARCH}" == "x86_64" ]; then
 				NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
 				#no libnvidia-fbc in the standard repos, so use the local one:
-				buildah copy $IMAGE_NAME /usr/lib64/libnvidia-fbc.so.*.* "$LIB/libnvidia-fbc.so"
+				buildah copy $IMAGE_NAME /usr/lib64/libnvidia-fbc.so.*.* "$LIB/libnvidia-fbc.so" || die "failed to copy 'libnvidia-fbc'"
 			fi
 			if [ "${ARCH}" == "arm64" ]; then
 				NVIDIA_PC_FILES="cuda nvenc nvjpeg"
@@ -125,13 +125,13 @@ for DISTRO in $DISTROS; do
 			#find the file, which may be arch specific:
 			for t in "./$pc_file-$ARCH.pc" "./$pc_file.pc"; do
 				if [ -r "$t" ]; then
-					buildah copy $IMAGE_NAME "$t" "${LIB}/pkgconfig/$pc_file.pc"
+					buildah copy $IMAGE_NAME "$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
 					break
 				fi
 			done
 		done
 	fi
-	buildah commit $IMAGE_NAME $IMAGE_NAME
+	buildah commit $IMAGE_NAME $IMAGE_NAME || die "failed to commit $IMAGE_NAME"
 
 	#manage ./opt/cuda as a symlink to the arch specific version:
 	pushd opt
