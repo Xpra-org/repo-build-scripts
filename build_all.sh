@@ -122,7 +122,13 @@ for DISTRO in $DISTROS; do
 			fi
 		fi
 		for pc_file in ${NVIDIA_PC_FILES}; do
-			buildah copy $IMAGE_NAME "./$pc_file.pc" "${LIB}/pkgconfig/$pc_file.pc"
+			#find the file, which may be arch specific:
+			for t in "./$pc_file-$ARCH.pc" "./$pc_file.pc"; do
+				if [ -r "$t" ]; then
+					buildah copy $IMAGE_NAME "$t" "${LIB}/pkgconfig/$pc_file.pc"
+					break
+				fi
+			done
 		done
 	fi
 	buildah commit $IMAGE_NAME $IMAGE_NAME
