@@ -131,13 +131,13 @@ for DISTRO in $DISTROS; do
 			done
 		done
 	fi
-	buildah commit $IMAGE_NAME $IMAGE_NAME || die "failed to commit $IMAGE_NAME"
-
 	#manage ./opt/cuda as a symlink to the arch specific version:
 	pushd opt
 	rm -f cuda
 	ln -sf cuda-$ARCH cuda
 	popd
+
+	buildah commit $IMAGE_NAME $IMAGE_NAME || die "failed to commit $IMAGE_NAME"
 
 	if [ ! -z "${RUN_CMD}" ]; then
 		buildah run \
