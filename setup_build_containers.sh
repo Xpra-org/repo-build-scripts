@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 Fedora:36 CentOS:7 CentOS:8 CentOS:8:arm64 CentOS:stream9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:34 Fedora:34:arm64 Fedora:35 Fedora:35:arm64 Fedora:36 CentOS:7 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9}
 #other distros we can build for:
 # CentOS:centos7.6.1810 CentOS:centos7.7.1908 CentOS:centos7.8.2003 CentOS:centos7.9:2009
 # CentOS:stream8
@@ -90,11 +90,18 @@ for DISTRO in $RPM_DISTROS; do
 			RNUM=`echo $DISTRO | awk -F: '{print $2}'`
 			$PM_CMD -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		else
+			#with stream8 and stream9,
+			#we have to enable EPEL to get the PowerTools repo:
+			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
+				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+			fi
+			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
+				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+			fi
 			#CentOS 8 and later:
 			#there is no "rpmspectool" package so we have to use pip to install it:
 			buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
 			buildah run $IMAGE_NAME pip3 install python-rpm-spec
-			#some builds require PowerTools:
 			#try different spellings because they've made it case sensitive and renamed the repo..
 			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
 			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled powertools
