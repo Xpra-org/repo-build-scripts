@@ -114,7 +114,9 @@ for DISTRO in $DISTROS; do
 			NVIDIA_PC_FILES=""
 			if [ "${ARCH}" == "x86_64" ]; then
 				NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
-				#no libnvidia-fbc in the standard repos, so use the local one:
+				#no libnvidia-fbc in the standard repos, so use the local one,
+				#remove any existing one:
+				buildah run $IMAGE_NAME rm -fr /usr/lib64/libnvidia-fbc.so*
 				#(I don't know how to dereference the symlink, so here goes)
 				fbc=`ls /usr/lib64/libnvidia-fbc.so* | tail -n 1`
 				buildah copy $IMAGE_NAME $fbc "$LIB/libnvidia-fbc.so" || die "failed to copy 'libnvidia-fbc'"
