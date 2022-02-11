@@ -97,6 +97,7 @@ for DISTRO in $RPM_DISTROS; do
 			fi
 			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
 				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
 			fi
 			#CentOS 8 and later:
 			#there is no "rpmspectool" package so we have to use pip to install it:
