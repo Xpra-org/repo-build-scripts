@@ -59,7 +59,7 @@ for DISTRO in $RPM_DISTROS; do
 			continue
 		fi
 	fi
-	if [ "${DISTRO}" == "CentOS:8" ]; then
+	if [[ "${DISTRO}" == "CentOS:8"* ]]; then
 		#use cloudflare for vault, where "centos8" now lives:
 		buildah run $IMAGE_NAME bash -c "sed -i 's/^mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*"
 		buildah run $IMAGE_NAME bash -c "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.epel.cloud|g' /etc/yum.repos.d/CentOS-Linux-*"
