@@ -100,6 +100,9 @@ for DISTRO in $RPM_DISTROS; do
 			#with stream8 and stream9,
 			#we have to enable EPEL to get the PowerTools repo:
 			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
+				for repo in appstream; do
+					buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo
+				done
 				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 			fi
 			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
