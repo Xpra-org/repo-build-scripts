@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 CentOS:7 almalinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 CentOS:7 almalinux:8.6 oraclelinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9}
 #other distros we can build for:
 # CentOS:centos7.6.1810 CentOS:centos7.7.1908 CentOS:centos7.8.2003 CentOS:centos7.9:2009
 # CentOS:stream8
@@ -99,7 +99,20 @@ for DISTRO in $RPM_DISTROS; do
 		else
 			#with stream8 and stream9,
 			#we have to enable EPEL to get the PowerTools repo:
+			RHEL8=0
 			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
+				RHEL8=1
+			fi
+			if [[[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
+				RHEL8=1
+			fi
+			if [[[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
+				RHEL8=1
+			fi
+			if [[[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
+				RHEL8=1
+			fi
+			if [ "${RHEL8}" == "1" ]; then
 				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 			fi
 			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
