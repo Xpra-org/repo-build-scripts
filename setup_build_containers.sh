@@ -103,13 +103,13 @@ for DISTRO in $RPM_DISTROS; do
 			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
 				RHEL8=1
 			fi
-			if [[[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
+			if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
 				RHEL8=1
 			fi
-			if [[[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
+			if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 				RHEL8=1
 			fi
-			if [[[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
+			if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
 				RHEL8=1
 			fi
 			if [ "${RHEL8}" == "1" ]; then
