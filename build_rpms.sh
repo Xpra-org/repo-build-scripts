@@ -106,6 +106,8 @@ while read p; do
 		#specfiles and patches
 		cp ./rpm/* "rpmbuild/SOURCES/"
 		cp ./rpm/* "$HOME/rpmbuild/SOURCES/"
+		cp ./rpm/patches/* "rpmbuild/SOURCES/"
+		cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
 		#source packages
 		cp ./pkgs/* "rpmbuild/SOURCES/"
 		cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
