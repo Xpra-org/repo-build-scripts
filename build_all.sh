@@ -92,7 +92,7 @@ for DISTRO in $DISTROS; do
 			if [ -r "${PACKAGING}/rpm/distros/${list_name}.list" ]; then
 				rpm_list_path=`readlink -e ${PACKAGING}/rpm/distros/${list_name}.list`
 				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.txt" || die "failed to copy rpms.txt list"
+				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
 			fi
 			#old location:
@@ -103,8 +103,8 @@ for DISTRO in $DISTROS; do
 			fi
 			if [ -r "${rpm_list}" ]; then
 				rpm_list_path=`readlink -e ${rpm_list}`
-				echo " using rpm package list from ${rpm_list_path}-rpms.txt"
-				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.txt" || die "failed to copy rpms.txt list"
+				echo " using rpm package list from ${rpm_list_path}"
+				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
 			fi
 		done
