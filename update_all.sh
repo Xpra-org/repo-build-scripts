@@ -21,7 +21,7 @@ for DISTRO in $DISTROS; do
 		continue
 	fi
 	echo $DISTRO : $IMAGE_NAME
-	echo $DISTRO | egrep -iv "fedora|centos" >& /dev/null
+	echo $DISTRO | egrep -iv "fedora|centos|rockylinux|oraclelinux|almalinux" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		CREATEREPO="createrepo"
