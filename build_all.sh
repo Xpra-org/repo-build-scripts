@@ -141,8 +141,8 @@ for DISTRO in $DISTROS; do
 		for pc_file in ${NVIDIA_PC_FILES}; do
 			#find the file, which may be arch specific:
 			for t in "./$pc_file-$ARCH.pc" "./$pc_file.pc"; do
-				if [ -r "$t" ]; then
-					buildah copy $IMAGE_NAME "$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
+				if [ -r "./pkgconfig/$t" ]; then
+					buildah copy $IMAGE_NAME "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
 					break
 				fi
 			done
