@@ -11,6 +11,6 @@ repo/*
 # pycharm IDE:
 /.idea
 
-*.log
+/logs/*.log
 screenlog.*
 /repo/
