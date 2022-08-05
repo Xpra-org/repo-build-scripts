@@ -100,8 +100,12 @@ for DISTRO in $RPM_DISTROS; do
 			#with stream8 and stream9,
 			#we have to enable EPEL to get the PowerTools repo:
 			RHEL8=0
+			RHEL9=0
 			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
 				RHEL8=1
+			fi
+			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
+				RHEL9=1
 			fi
 			if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
 				RHEL8=1
@@ -111,13 +115,19 @@ for DISTRO in $RPM_DISTROS; do
 			if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 				RHEL8=1
 			fi
+			if [[ "${DISTRO_LOWER}" == *"rockylinux:9"* ]]; then
+				RHEL9=1
+			fi
 			if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
 				RHEL8=1
+			fi
+			if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
+				RHEL9=1
 			fi
 			if [ "${RHEL8}" == "1" ]; then
 				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 			fi
-			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
+			if [ "${RHEL9}" == "1" ]; then
 				buildah run $IMAGE_NAME $PM_CMD install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
 			fi
