@@ -186,10 +186,9 @@ for DISTRO in $DEB_DISTROS; do
 	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
-	buildah copy $IMAGE_NAME "01keep-debs" "/etc/apt/apt.conf.d/01keep-debs"
-	buildah copy $IMAGE_NAME "02broken-downloads" "/etc/apt/apt.conf.d/02broken-downloads"
-	buildah copy $IMAGE_NAME "03retry" "/etc/apt/apt.conf.d/02retry"
-
+	for x in `ls apt/*`; do
+		buildah copy $IMAGE_NAME "$x" "/etc/apt/apt.conf.d/$x"
+	done
 	#we don't need a local repo yet:
 	#DISTRO_NAME=`echo $DISTRO | awk -F: '{print $2}'`
 	#buildah run $IMAGE_NAME bash -c 'echo "deb file:///repo $DISTRO_NAME main" > /etc/apt/sources.list.d/local-build.list'
