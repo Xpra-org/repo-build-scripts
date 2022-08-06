@@ -1,0 +1,4 @@
+Name: nvjpeg
+Description: NVIDIA JPEG Library
+Version: 11.4
+Libs: -lnvjpeg
