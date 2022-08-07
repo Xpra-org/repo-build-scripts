@@ -115,6 +115,10 @@ for DISTRO in $RPM_DISTROS; do
 				#the development headers live in this repo:
 				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol8_codeready_builder
 			fi
+			if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
+				RHEL9=1
+				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol9_codeready_builder
+			fi
 			if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 				RHEL8=1
 			fi
