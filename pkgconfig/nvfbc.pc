@@ -4,5 +4,5 @@ includedir=${prefix}/inc
 Name: nvfbc
 Description: NVFBC
 Version: 8.0
-Libs: -L/usr/lib64 -lnvidia-fbc
+Libs: -L${prefix} -lnvidia-fbc
 Cflags: -I${includedir}
