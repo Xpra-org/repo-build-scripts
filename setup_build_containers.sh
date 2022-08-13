@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 CentOS:7 almalinux:8.6 oraclelinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 CentOS:7 almalinux:8.6 rockylinux:8 oraclelinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9 rockylinux:9 oraclelinux:9}
 #other distros we can build for:
 # CentOS:centos7.6.1810 CentOS:centos7.7.1908 CentOS:centos7.8.2003 CentOS:centos7.9:2009
 # CentOS:stream8
@@ -157,7 +157,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:sid}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:kinetic Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:sid}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
