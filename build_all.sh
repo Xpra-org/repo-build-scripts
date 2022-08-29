@@ -36,7 +36,7 @@ fi
 for DISTRO in $DISTROS; do
 	echo
 	echo "********************************************************************************"
-	#ie: DISTRO="Fedora:35:arm64"
+	#ie: DISTRO="Fedora:35:arm64" or "ubuntu-focal"
 	# DISTRO_NAME="fedora-35-arm64"
 	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
 	#split parts:
@@ -111,7 +111,7 @@ for DISTRO in $DISTROS; do
 		echo "RPM: $REPO_PATH"
 	else
 		LIB="/usr/lib"
-		DISTRO_RELEASE=`echo $DISTRO | awk -F: '{print $2}'`
+		DISTRO_RELEASE=`echo $FULL_DISTRO_NAME | awk -F- '{print $2}'`
 		REPO_PATH="${BUILDAH_DIR}/repo/$DISTRO_RELEASE"
 		BUILD_SCRIPT="build_debs.sh"
 		echo "DEB: $REPO_PATH"
