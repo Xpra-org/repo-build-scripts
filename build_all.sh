@@ -42,6 +42,11 @@ for DISTRO in $DISTROS; do
 	#split parts:
 	#1=Fedora
 	DISTRO_NAME=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $1}'`
+	if [ "${DISTRO_NAME}" == "fedora" ]; then
+		DISTRO_NAME="Fedora"
+	elif [ "${DISTRO_NAME}" == "centos" ]; then
+		DISTRO_NAME="CentOS"
+	fi
 	#2=35
 	DISTRO_VARIANT=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $2}'`
 	#strip centos from distro variant:
