@@ -41,14 +41,14 @@ for DISTRO in $DISTROS; do
 	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
 	#split parts:
 	#1=Fedora
-	DISTRO_NAME=`echo ${DISTRO} | awk -F: '{print $1}'`
+	DISTRO_NAME=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $1}'`
 	#2=35
-	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
+	DISTRO_VARIANT=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $2}'`
 	#strip centos from distro variant:
 	#ie: centos7.6.1801 -> 7.6.1801
 	DISTRO_VARIANT="${DISTRO_VARIANT#centos}"
 	#3=arm64
-	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
+	ARCH=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
