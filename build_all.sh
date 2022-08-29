@@ -111,8 +111,7 @@ for DISTRO in $DISTROS; do
 		echo "RPM: $REPO_PATH"
 	else
 		LIB="/usr/lib"
-		DISTRO_RELEASE=`echo $FULL_DISTRO_NAME | awk -F- '{print $2}'`
-		REPO_PATH="${BUILDAH_DIR}/repo/$DISTRO_RELEASE"
+		REPO_PATH="${BUILDAH_DIR}/repo/$DISTRO_VARIANT"
 		BUILD_SCRIPT="build_debs.sh"
 		echo "DEB: $REPO_PATH"
 	fi
