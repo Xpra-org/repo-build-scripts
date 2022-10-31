@@ -25,7 +25,7 @@ if [ "${DO_DOWNLOAD}" == "1" ]; then
 fi
 
 #distros supported by xpra git master:
-#DISTROS="Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 Fedora:37 CentOS:8 almalinux:8.6 rockylinux:8 oraclelinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9 rockylinux:9 oraclelinux:9 Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:kinetic Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:sid"
+#DISTROS="Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 Fedora:37 CentOS:8 almalinux:8.6 rockylinux:8 oraclelinux:8.6 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9 rockylinux:9 oraclelinux:9 Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:kinetic Ubuntu:lunar Debian:stretch Debian:buster Debian:buster:arm64 Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:sid"
 #all the distros supported by the xpra 3.1.x branch:
 #DISTROS="Fedora:35 Fedora:36 CentOS:7 CentOS:8 CentOS:stream8 almalinux:8.6 rockylinux:8 oraclelinux:8.6 CentOS:stream8 Ubuntu:bionic Debian:stretch Debian:buster Debian:bullseye"
 if [ -z "${DISTROS}" ]; then
