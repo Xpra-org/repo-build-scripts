@@ -13,7 +13,6 @@ pushd ${BUILDAH_DIR}
 #arm64 builds require qemu-aarch64-static
 RPM_DISTROS=${RPM_DISTROS:-Fedora:35 Fedora:35:arm64 Fedora:36 Fedora:36:arm64 Fedora:37 almalinux:8.7 rockylinux:8 oraclelinux:8.7 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9.1 rockylinux:9 oraclelinux:9}
 #other distros we can build for:
-# CentOS:centos7.6.1810 CentOS:centos7.7.1908 CentOS:centos7.8.2003 CentOS:centos7.9:2009
 # CentOS:stream8
 # CentOS:centos8.3.2011 CentOS:8.4.2105
 # almalinux:8.4
@@ -29,11 +28,6 @@ for DISTRO in $RPM_DISTROS; do
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
 	PM="dnf"
 	CREATEREPO="createrepo"
-	echo $DISTRO | egrep -qi "centos:7|centos-7|centos7"
-	if [ "$?" == "0" ]; then
-		PM="yum"
-		#createrepo="createrepo_c"
-	fi
 	PM_CMD="$PM"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
@@ -85,64 +79,62 @@ for DISTRO in $RPM_DISTROS; do
 		buildah run $IMAGE_NAME $PM_CMD update -y
 	fi
 	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync
-	if [ "$PM" == "dnf" ]; then
-		buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
-		buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
-		buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
-		buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
-		if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
-			#the easy way on Fedora which has an 'rpmspectool' package:
-			buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool
-		else
-			#with stream8 and stream9,
-			#we have to enable EPEL to get the PowerTools repo:
-			EPEL="epel-release"
-			RHEL8=0
-			RHEL9=0
-			if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
-				EPEL="epel-next-release"
-				RHEL8=1
-			fi
-			if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
-				EPEL="epel-next-release"
-				RHEL9=1
-			fi
-			if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
-				RHEL8=1
-				#the development headers live in this repo:
-				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol8_codeready_builder
-			fi
-			if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
-				RHEL9=1
-				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol9_codeready_builder
-			fi
-			if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
-				RHEL8=1
-			fi
-			if [[ "${DISTRO_LOWER}" == *"rockylinux:9"* ]]; then
-				RHEL9=1
-			fi
-			if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
-				RHEL8=1
-			fi
-			if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
-				RHEL9=1
-			fi
-			if [ "${RHEL8}" == "1" ]; then
-				buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
-			fi
-			if [ "${RHEL9}" == "1" ]; then
-				buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
-				buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
-			fi
-			#CentOS 8 and later:
-			#there is no "rpmspectool" package so we have to use pip to install it:
-			buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
-			buildah run $IMAGE_NAME pip3 install python-rpm-spec
-			#try different spellings because they've made it case sensitive and renamed the repo..
-			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
-			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled powertools
+	buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
+	buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
+	buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
+	buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
+	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
+		#the easy way on Fedora which has an 'rpmspectool' package:
+		buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool
+	else
+		#with stream8 and stream9,
+		#we have to enable EPEL to get the PowerTools repo:
+		EPEL="epel-release"
+		RHEL8=0
+		RHEL9=0
+		if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
+			EPEL="epel-next-release"
+			RHEL8=1
 		fi
+		if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
+			EPEL="epel-next-release"
+			RHEL9=1
+		fi
+		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
+			RHEL8=1
+			#the development headers live in this repo:
+			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol8_codeready_builder
+		fi
+		if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
+			RHEL9=1
+			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol9_codeready_builder
+		fi
+		if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
+			RHEL8=1
+		fi
+		if [[ "${DISTRO_LOWER}" == *"rockylinux:9"* ]]; then
+			RHEL9=1
+		fi
+		if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
+			RHEL8=1
+		fi
+		if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
+			RHEL9=1
+		fi
+		if [ "${RHEL8}" == "1" ]; then
+			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
+		fi
+		if [ "${RHEL9}" == "1" ]; then
+			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
+			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
+		fi
+		#CentOS 8 and later:
+		#there is no "rpmspectool" package so we have to use pip to install it:
+		buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
+		buildah run $IMAGE_NAME pip3 install python-rpm-spec
+		#try different spellings because they've made it case sensitive and renamed the repo..
+		buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
+		buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled powertools
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run $PM clean all
