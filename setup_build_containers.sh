@@ -93,9 +93,6 @@ for DISTRO in $RPM_DISTROS; do
 		if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 			#the easy way on Fedora which has an 'rpmspectool' package:
 			buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool
-			#generate dnf cache:
-			RNUM=`echo $DISTRO | awk -F: '{print $2}'`
-			$PM_CMD -y makecache --releasever=$RNUM --setopt=cachedir=`pwd`/cache/dnf/$RNUM
 		else
 			#with stream8 and stream9,
 			#we have to enable EPEL to get the PowerTools repo:
