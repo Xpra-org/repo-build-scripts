@@ -29,4 +29,5 @@ RPM_DISTROS="Fedora:34" ./setup_build_containers.sh
 DISTROS="Fedora:34" ./build_all.sh
 ```
 
-For more details, refer to the (ugly) scripts themselves.
+For more details, refer to the (ugly) scripts themselves.  
+The `arm64` images require `qemu-system-aarch64`.
