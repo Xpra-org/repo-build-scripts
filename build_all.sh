@@ -131,6 +131,9 @@ for DISTRO in $DISTROS; do
 			if [ "${ARCH}" == "x86_64" ]; then
 				NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
 				#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
+				for lib in `ls /usr/lib64/libnvidia-fbc.so*`; do
+					buildah copy $TEMP_IMAGE "$lib" "$lib" || die "failed to copy $lib"
+				done
 			fi
 			if [ "${ARCH}" == "arm64" ]; then
 				NVIDIA_PC_FILES="cuda nvenc nvjpeg"
