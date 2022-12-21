@@ -29,5 +29,6 @@ RPM_DISTROS="Fedora:34" ./setup_build_containers.sh
 DISTROS="Fedora:34" ./build_all.sh
 ```
 
-For more details, refer to the (ugly) scripts themselves.  
+For more details, refer to the (ugly) scripts themselves. 
+The source download script requires `rpmspec` (found in `rpm-build` package on Fedora).  
 The `arm64` images require `qemu-system-aarch64` and / or `qemu-user-static`.
