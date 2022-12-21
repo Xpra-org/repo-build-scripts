@@ -140,7 +140,7 @@ for DISTRO in $DISTROS; do
 			#find the file, which may be arch specific:
 			for t in "$pc_file-$ARCH.pc" "$pc_file.pc"; do
 				if [ -r "./pkgconfig/$t" ]; then
-					buildah copy $IMAGE_NAME "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
+					buildah copy $TEMP_IMAGE "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
 					break
 				fi
 			done
@@ -152,7 +152,7 @@ for DISTRO in $DISTROS; do
 	ln -sf cuda-$ARCH cuda
 	popd
 
-	buildah commit $IMAGE_NAME $IMAGE_NAME || die "failed to commit $IMAGE_NAME"
+	buildah commit $TEMP_IMAGE $TEMP_IMAGE || die "failed to commit $IMAGE_NAME"
 
 	if [ ! -z "${RUN_CMD}" ]; then
 		buildah run \
