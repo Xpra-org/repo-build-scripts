@@ -30,7 +30,7 @@ fi
 #DISTROS="Fedora:35 Fedora:36 CentOS:7 CentOS:8 CentOS:stream8 almalinux:8.6 rockylinux:8 oraclelinux:8.6 CentOS:stream8 Ubuntu:bionic Debian:stretch Debian:buster Debian:bullseye"
 if [ -z "${DISTROS}" ]; then
 	#default to build all distros found:
-	DISTROS=`buildah images | grep '\-repo-build' | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vF "." | sort -V`
+	DISTROS=`buildah images | grep '\-repo-build' | grep -v "temp" | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vF "." | sort -V`
 fi
 
 for DISTRO in $DISTROS; do
