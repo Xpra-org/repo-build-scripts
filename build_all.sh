@@ -155,7 +155,7 @@ for DISTRO in $DISTROS; do
 	ln -sf cuda-$ARCH cuda
 	popd
 
-	buildah commit $TEMP_IMAGE $TEMP_IMAGE || die "failed to commit $IMAGE_NAME"
+	buildah commit $TEMP_IMAGE $TEMP_IMAGE || die "failed to commit $TEMP_IMAGE"
 
 	if [ ! -z "${RUN_CMD}" ]; then
 		buildah run \
