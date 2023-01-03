@@ -176,5 +176,6 @@ for DISTRO in $DISTROS; do
 					--volume ${PACKAGING}/debian:/src/debian:O \
 					$TEMP_IMAGE $BASH -c "DEBUG=${DEBUG} /src/${BUILD_SCRIPT}" |& tee "./logs/${FULL_DISTRO_NAME}.log"
 	fi
+	buildah rmi "${TEMP_IMAGE}"
 	buildah rm "${TEMP_IMAGE}"
 done
