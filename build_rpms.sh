@@ -104,8 +104,8 @@ while read p; do
 		rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS"
 		mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" 2> /dev/null
 		#specfiles and patches
-		cp ./rpm/*spec ./rpm/*patch "rpmbuild/SOURCES/"
-		cp ./rpm/*spec ./rpm/*patch "$HOME/rpmbuild/SOURCES/"
+		cp ./rpm/*spec "rpmbuild/SOURCES/"
+		cp ./rpm/*spec "$HOME/rpmbuild/SOURCES/"
 		cp ./rpm/patches/* "rpmbuild/SOURCES/"
 		cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
 		#source packages
