@@ -3,6 +3,6 @@ includedir=${prefix}/Interface
 
 Name: nvenc
 Description: NVENC
-Version: 10
+Version: 12
 Libs: -L/usr/lib64/nvidia -L/usr/lib/nvidia
 Cflags: -I${includedir} -Wno-error=deprecated-declarations
