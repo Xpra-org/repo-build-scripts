@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:36 Fedora:36:arm64 Fedora:37 Fedora:37:arm64 almalinux:8.7 rockylinux:8 oraclelinux:8.7 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9.1 rockylinux:9 oraclelinux:9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:36 Fedora:36:arm64 Fedora:37 Fedora:37:arm64 Fedora:38 Fedora:38:arm64 almalinux:8.7 rockylinux:8 oraclelinux:8.7 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9.1 rockylinux:9 oraclelinux:9}
 #other distros we can build for:
 # CentOS:stream8
 # CentOS:centos8.3.2011 CentOS:8.4.2105
