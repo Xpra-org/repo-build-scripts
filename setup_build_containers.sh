@@ -75,6 +75,11 @@ for DISTRO in $RPM_DISTROS; do
 		buildah run $IMAGE_NAME dnf config-manager --set-enabled fedora-cisco-openh264
 		#add rpmfusion:
 		buildah run $IMAGE_NAME dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm"
+	else
+		#add rpmfusion:
+		buildah run $IMAGE_NAME dnf install -y --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm"
+		#also nonfree?
+		#https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
 	fi
 	#don't update distros with a minor number:
 	#(ie: CentOS:8.2.2004)
