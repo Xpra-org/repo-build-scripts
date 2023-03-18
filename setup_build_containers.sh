@@ -67,10 +67,14 @@ for DISTRO in $RPM_DISTROS; do
 		#some repositories are enabled by default,
 		#but we don't want to use them
 		#(any repository failures would cause problems)
-		for repo in fedora-cisco-openh264 fedora-modular updates-modular updates-testing-modular updates-testing-modular-debuginfo updates-testing-modular-source; do
+		for repo in fedora-modular updates-modular updates-testing-modular updates-testing-modular-debuginfo updates-testing-modular-source; do
 			#buildah run $IMAGE_NAME dnf config-manager --save "--setopt=$repo.skip_if_unavailable=true" $repo
 			buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo
 		done
+		#enable openh264:
+		buildah run $IMAGE_NAME dnf config-manager --set-enabled fedora-cisco-openh264
+		#add rpmfusion:
+		buildah run $IMAGE_NAME dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm"
 	fi
 	#don't update distros with a minor number:
 	#(ie: CentOS:8.2.2004)
