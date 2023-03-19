@@ -28,7 +28,6 @@ for DISTRO in $RPM_DISTROS; do
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
 	PM="dnf"
 	CREATEREPO="createrepo"
-	PM_CMD="$PM"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="amd64"
@@ -42,9 +41,6 @@ for DISTRO in $RPM_DISTROS; do
 		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
 			continue
 		fi
-		#make sure to skip the local repositories,
-		#which may or may not be in a usable state:
-		PM_CMD="$PM --disablerepo=repo-local-source --disablerepo=repo-local-build"
 	else
 		echo "creating ${IMAGE_NAME}"
 		buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
@@ -85,16 +81,16 @@ for DISTRO in $RPM_DISTROS; do
 	#(ie: CentOS:8.2.2004)
 	echo $DISTRO | grep -vqF "."
 	if [ "$?" == "0" ]; then
-		buildah run $IMAGE_NAME $PM_CMD update -y
+		buildah run $IMAGE_NAME dnf update -y --disablerepo=repo-local-build --disablerepo=repo-local-source
 	fi
-	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync --disablerepo=repo-local-build --disablerepo=repo-local-source
-	buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)' --disablerepo=repo-local-build --disablerepo=repo-local-source
+	buildah run $IMAGE_NAME dnf install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync --disablerepo=repo-local-build --disablerepo=repo-local-source
+	buildah run $IMAGE_NAME dnf install -y 'dnf-command(builddep)' --disablerepo=repo-local-build --disablerepo=repo-local-source
 	buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
 	buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
 	buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		#the easy way on Fedora which has an 'rpmspectool' package:
-		buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool --disablerepo=repo-local-build --disablerepo=repo-local-source
+		buildah run $IMAGE_NAME dnf install -y rpmspectool --disablerepo=repo-local-build --disablerepo=repo-local-source
 	else
 		#with stream8 and stream9,
 		#we have to enable EPEL to get the PowerTools repo:
@@ -112,11 +108,11 @@ for DISTRO in $RPM_DISTROS; do
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
 			RHEL8=1
 			#the development headers live in this repo:
-			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol8_codeready_builder
+			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol8_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
 			RHEL9=1
-			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled ol9_codeready_builder
+			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol9_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 			RHEL8=1
@@ -131,19 +127,19 @@ for DISTRO in $RPM_DISTROS; do
 			RHEL9=1
 		fi
 		if [ "${RHEL8}" == "1" ]; then
-			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
+			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
 		if [ "${RHEL9}" == "1" ]; then
-			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
-			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
+			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
+			buildah run $IMAGE_NAME dnf config-manager --set-enabled crb
 		fi
 		#CentOS 8 and later:
 		#there is no "rpmspectool" package so we have to use pip to install it:
-		buildah run $IMAGE_NAME $PM_CMD install -y python3-pip --disablerepo=repo-local-build --disablerepo=repo-local-source
+		buildah run $IMAGE_NAME dnf install -y python3-pip --disablerepo=repo-local-build --disablerepo=repo-local-source
 		buildah run $IMAGE_NAME pip3 install python-rpm-spec
 		#try different spellings because they've made it case sensitive and renamed the repo..
-		buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
-		buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled powertools
+		buildah run $IMAGE_NAME dnf config-manager --set-enabled PowerTools
+		buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run $PM clean all
