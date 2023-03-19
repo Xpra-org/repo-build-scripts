@@ -74,10 +74,10 @@ for DISTRO in $RPM_DISTROS; do
 		#enable openh264:
 		buildah run $IMAGE_NAME dnf config-manager --set-enabled fedora-cisco-openh264
 		#add rpmfusion:
-		buildah run $IMAGE_NAME dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm"
+		buildah run $IMAGE_NAME dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm" --disablerepo=repo-local-build --disablerepo=repo-local-source
 	else
 		#add rpmfusion:
-		buildah run $IMAGE_NAME dnf install -y --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm"
+		buildah run $IMAGE_NAME dnf install -y --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_VARIANT}.noarch.rpm" --disablerepo=repo-local-build --disablerepo=repo-local-source
 		#also nonfree?
 		#https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
 	fi
@@ -87,14 +87,14 @@ for DISTRO in $RPM_DISTROS; do
 	if [ "$?" == "0" ]; then
 		buildah run $IMAGE_NAME $PM_CMD update -y
 	fi
-	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync
-	buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)'
+	buildah run $IMAGE_NAME $PM_CMD install -y redhat-rpm-config rpm-build rpmdevtools createrepo rsync --disablerepo=repo-local-build --disablerepo=repo-local-source
+	buildah run $IMAGE_NAME $PM_CMD install -y 'dnf-command(builddep)' --disablerepo=repo-local-build --disablerepo=repo-local-source
 	buildah run $IMAGE_NAME bash -c "echo 'keepcache=true' >> /etc/dnf/dnf.conf"
 	buildah run $IMAGE_NAME bash -c "echo 'deltarpm=false' >> /etc/dnf/dnf.conf"
 	buildah run $IMAGE_NAME bash -c "echo 'fastestmirror=true' >> /etc/dnf/dnf.conf"
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		#the easy way on Fedora which has an 'rpmspectool' package:
-		buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool
+		buildah run $IMAGE_NAME ${PM_CMD} install -y rpmspectool --disablerepo=repo-local-build --disablerepo=repo-local-source
 	else
 		#with stream8 and stream9,
 		#we have to enable EPEL to get the PowerTools repo:
@@ -131,15 +131,15 @@ for DISTRO in $RPM_DISTROS; do
 			RHEL9=1
 		fi
 		if [ "${RHEL8}" == "1" ]; then
-			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
+			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
 		if [ "${RHEL9}" == "1" ]; then
-			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL
+			buildah run $IMAGE_NAME $PM_CMD install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 			buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled crb
 		fi
 		#CentOS 8 and later:
 		#there is no "rpmspectool" package so we have to use pip to install it:
-		buildah run $IMAGE_NAME $PM_CMD install -y python3-pip
+		buildah run $IMAGE_NAME $PM_CMD install -y python3-pip --disablerepo=repo-local-build --disablerepo=repo-local-source
 		buildah run $IMAGE_NAME pip3 install python-rpm-spec
 		#try different spellings because they've made it case sensitive and renamed the repo..
 		buildah run $IMAGE_NAME $PM_CMD config-manager --set-enabled PowerTools
