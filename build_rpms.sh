@@ -81,6 +81,8 @@ while read p; do
 				echo " (ignored debugsource)"
 			elif [[ $dep == *-doc-* ]]; then
 				echo " (ignored doc)"
+			elif [[ $dep == *.src ]]; then
+				echo " (ignored src)"
 			else
 				MISSING="${MISSING} ${dep}"
 			fi
