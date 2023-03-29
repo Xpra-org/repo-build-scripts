@@ -50,6 +50,19 @@ else
 fi
 
 
+#prepare rpmbuild (assume we're going to build something):
+rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS"
+mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS" 2> /dev/null
+#specfiles and patches
+cp ./rpm/*spec "rpmbuild/SOURCES/"
+cp ./rpm/*spec "$HOME/rpmbuild/SOURCES/"
+cp ./rpm/patches/* "rpmbuild/SOURCES/"
+cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
+#source packages
+cp ./pkgs/* "rpmbuild/SOURCES/"
+cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
+
+
 #read the name of the spec files we may want to build:
 while read p; do
 	if [ -z "${p}" ]; then
@@ -101,16 +114,6 @@ while read p; do
 			cat builddep.log
 			exit 1
 		fi
-		rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS"
-		mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" 2> /dev/null
-		#specfiles and patches
-		cp ./rpm/*spec "rpmbuild/SOURCES/"
-		cp ./rpm/*spec "$HOME/rpmbuild/SOURCES/"
-		cp ./rpm/patches/* "rpmbuild/SOURCES/"
-		cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
-		#source packages
-		cp ./pkgs/* "rpmbuild/SOURCES/"
-		cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
 		echo " - building RPM package(s)"
 		rpmbuild --define "_topdir `pwd`/rpmbuild" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log
 		if [ "$?" != "0" ]; then
