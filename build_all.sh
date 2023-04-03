@@ -126,18 +126,16 @@ for DISTRO in $DISTROS; do
 	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
 	NVIDIA_CODECS="${NVIDIA_CODECS:-1}"
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
-		if [ -z "${NVIDIA_PC_FILES}" ]; then
-			NVIDIA_PC_FILES=""
-			if [ "${ARCH}" == "x86_64" ]; then
-				NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
-				#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
-				for lib in `ls /usr/lib64/libnvidia-fbc.so*`; do
-					buildah copy $TEMP_IMAGE "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
-				done
-			fi
-			if [ "${ARCH}" == "arm64" ]; then
-				NVIDIA_PC_FILES="cuda nvenc nvjpeg"
-			fi
+		NVIDIA_PC_FILES=""
+		if [ "${ARCH}" == "x86_64" ]; then
+			NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
+			#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
+			for lib in `ls /usr/lib64/libnvidia-fbc.so*`; do
+				buildah copy $TEMP_IMAGE "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
+			done
+		fi
+		if [ "${ARCH}" == "arm64" ]; then
+			NVIDIA_PC_FILES="cuda nvenc nvjpeg"
 		fi
 		for pc_file in ${NVIDIA_PC_FILES}; do
 			#find the file, which may be arch specific:
