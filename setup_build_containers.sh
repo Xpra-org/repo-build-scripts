@@ -27,8 +27,6 @@ for DISTRO in $RPM_DISTROS; do
 	    continue
 	fi
 	IMAGE_NAME="`echo $DISTRO_LOWER | awk -F'/' '{print $1}' | sed 's/:/-/g'`-repo-build"
-	PM="dnf"
-	CREATEREPO="createrepo"
 	ARCH=`echo $DISTRO | awk -F: '{print $3}'`
 	if [ -z "${ARCH}" ]; then
 		ARCH="amd64"
@@ -148,12 +146,12 @@ for DISTRO in $RPM_DISTROS; do
 		buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
-	#buildah run $PM clean all
+	#buildah run dnf clean all
 
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah copy $IMAGE_NAME "./local-build.repo" "/etc/yum.repos.d/"
-	buildah run $IMAGE_NAME ${CREATEREPO} "/src/repo/"
+	buildah run $IMAGE_NAME createrepo "/src/repo/"
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
