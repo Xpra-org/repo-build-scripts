@@ -37,22 +37,21 @@ for DISTRO in $RPM_DISTROS; do
 	DISTRO_NOARCH=`echo "${DISTRO_LOWER}" | awk -F: '{print $1":"$2}'`
 	echo
 	echo "********************************************************************************"
-	podman image exists $IMAGE_NAME
+	podman image exists "${IMAGE_NAME}"
 	if [ "$?" == "0" ]; then
+		echo "${IMAGE_NAME} already exists"
 		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
 			continue
 		fi
-		#delete this image, we will re-generate it:
+		#delete existing image
 		buildah rmi "${IMAGE_NAME}"
 	fi
-	podman container exists $IMAGE_NAME
+	buildah rm "${IMAGE_NAME}"
+	echo "creating ${IMAGE_NAME}"
+	buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
 	if [ "$?" != "0" ]; then
-		echo "creating ${IMAGE_NAME}"
-		buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
-		if [ "$?" != "0" ]; then
-			echo "Warning: failed to create image $IMAGE_NAME"
-			continue
-		fi
+		echo "Warning: failed to create image $IMAGE_NAME"
+		continue
 	fi
 	if [[ "${DISTRO}" == "CentOS:8"* ]]; then
 		#use cloudflare for vault, where "centos8" now lives:
