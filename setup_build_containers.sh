@@ -42,6 +42,8 @@ for DISTRO in $RPM_DISTROS; do
 		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
 			continue
 		fi
+		#delete container if one exists:
+		buildah rm "${IMAGE_NAME}"
 	else
 		echo "creating ${IMAGE_NAME}"
 		buildah from --arch "${ARCH}" --name "${IMAGE_NAME}" "${DISTRO_NOARCH}"
@@ -179,6 +181,8 @@ for DISTRO in $DEB_DISTROS; do
 		if [ "${SKIP_EXISTING:-1}" == "1" ]; then
 			continue
 		fi
+		#delete container if one exists:
+		buildah rm "${IMAGE_NAME}"
 	else
 		echo "creating ${IMAGE_NAME}"
 		buildah from --arch "${ARCH}" --name "$IMAGE_NAME" "$DISTRO_NOARCH"
