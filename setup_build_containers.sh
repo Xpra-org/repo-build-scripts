@@ -73,6 +73,8 @@ for DISTRO in $RPM_DISTROS; do
 		#add rpmfusion:
 		buildah run $IMAGE_NAME dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm" --disablerepo=repo-local-build --disablerepo=repo-local-source
 	else
+		#why do we need to do this by hand?
+		buildah run $IMAGE_NAME rpm --import ///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 		#add rpmfusion:
 		buildah run $IMAGE_NAME dnf install -y --nogpgcheck "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm" --disablerepo=repo-local-build --disablerepo=repo-local-source
 		#also nonfree?
