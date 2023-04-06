@@ -76,8 +76,16 @@ while read p; do
 	echo "****************************************************************"
 	echo " $p"
 	SPECFILE="./rpm/$p.spec"
+	rpmspec -q --srpm ${SPECFILE} | sort > "/tmp/${p}.srpmlist"
+	rpmspec -q --rpms ${SPECFILE} | sort > "/tmp/${p}.rpmslist"
+	cp "/tmp/${p}.rpmslist" "/tmp/${p}.list"
+	rpmcount=`wc -l "/tmp/${p}.list" | awk '{print $1}'`
+	if [ "${rpmcount}" -gt "1" ]; then
+		#multiple rpms from this spec file
+		#so remove the srpm from the list of all rpms
+		comm -3 "/tmp/${p}.srpmlist" "/tmp/${p}.rpmslist" > "/tmp/${p}.list"
+	fi
 	MISSING=""
-	rpmspec -q --rpms ${SPECFILE}
 	while read -r dep; do
 		if [ "$DNF" == "yum" ]; then
 			MATCHES=`repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l`
@@ -98,7 +106,7 @@ while read p; do
 				MISSING="${MISSING} ${dep}"
 			fi
 		fi
-	done < <(rpmspec -q --rpms ${SPECFILE} --define "xpra_revision_no ${XPRA_REVISION}" 2> /dev/null)
+	done < "/tmp/${p}.list"
 	if [ ! -z "${MISSING}" ]; then
 		echo " need to rebuild $p to get:${MISSING}"
 		echo " - installing build dependencies"
