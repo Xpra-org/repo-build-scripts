@@ -21,7 +21,8 @@ for DISTRO in $RPM_DISTROS; do
 	DISTRO_LOWER="${DISTRO,,}"
 	DISTRO_NAME=`echo ${DISTRO} | awk -F: '{print $1}'`
 	DISTRO_VARIANT=`echo ${DISTRO} | awk -F: '{print $2}'`
-	DISTRO_NO=`echo "${DISTRO_VARIANT//[^0-9.]/}"`
+	DISTRO_NO=`echo "${DISTRO_VARIANT//[^0-9.]/}"`					#ie: "almalinux:9.2" - > "9.2"
+	DISTRO_MAJOR_NO=`echo "${DISTRO_NO}" | awk -F. '{print $1}'`	#ie: "almalinux:9.2" - > "9"
 	if [[ "$DISTRO_LOWER" == "xx"* ]];then
 	    echo "skipped $DISTRO"
 	    continue
@@ -72,12 +73,12 @@ for DISTRO in $RPM_DISTROS; do
 		#enable openh264:
 		buildah run $IMAGE_NAME dnf config-manager --set-enabled fedora-cisco-openh264
 		#add rpmfusion:
-		buildah run $IMAGE_NAME bash -c "dnf install -y \"https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source || dnf install -y \"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source"
+		buildah run $IMAGE_NAME bash -c "dnf install -y \"https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source || dnf install -y \"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source"
 	else
 		#why do we need to do this by hand?
 		buildah run $IMAGE_NAME rpm --import ///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 		#add rpmfusion:
-		buildah run $IMAGE_NAME bash -c "dnf install -y --nogpgcheck \"https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source || dnf install -y --nogpgcheck \"https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source"
+		buildah run $IMAGE_NAME bash -c "dnf install -y --nogpgcheck \"https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source || dnf install -y --nogpgcheck \"https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source"
 		#also nonfree?
 		#https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
 	fi
