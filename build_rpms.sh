@@ -95,14 +95,14 @@ while read p; do
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
 		else
-			echo " * missing ${dep}"
 			if [[ $dep == *debuginfo* ]]; then
-				echo " (ignored debuginfo)"
+				echo "   ignore missing debuginfo ${dep}"
 			elif [[ $dep == *debugsource* ]]; then
-				echo " (ignored debugsource)"
+				echo "   ignore missing debugsource ${dep}"
 			elif [[ $dep == *-doc-* ]]; then
-				echo " (ignored doc)"
+				echo "   ignore missing doc ${dep}"
 			else
+				echo " * missing ${dep}"
 				MISSING="${MISSING} ${dep}"
 			fi
 		fi
