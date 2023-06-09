@@ -77,7 +77,7 @@ while read p; do
 	echo " $p"
 	SPECFILE="./rpm/$p.spec"
 	rpmspec -q --srpm ${SPECFILE} | sort > "/tmp/${p}.srpmlist"
-	rpmspec -q --rpms ${SPECFILE} | sort > "/tmp/${p}.rpmslist"
+	rpmspec -q --rpms ${SPECFILE} | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
 	cp "/tmp/${p}.rpmslist" "/tmp/${p}.list"
 	rpmcount=`wc -l "/tmp/${p}.list" | awk '{print $1}'`
 	if [ "${rpmcount}" -gt "1" ]; then
