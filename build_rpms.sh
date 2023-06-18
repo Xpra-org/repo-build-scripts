@@ -1,5 +1,6 @@
 #!/bin/bash
 
+date +"%Y-%m-%d %H:%M:%S"
 dnf --version >& /dev/null
 if [ "$?" == "0" ]; then
 	DNF="${DNF:-dnf}"
@@ -109,6 +110,7 @@ while read p; do
 	done < "/tmp/${p}.list"
 	if [ ! -z "${MISSING}" ]; then
 		echo " need to rebuild $p to get:${MISSING}"
+		date +"%Y-%m-%d %H:%M:%S"
 		echo " - installing build dependencies"
 		yum-builddep --version >& /dev/null
 		if [ "$?" == "0" ]; then
@@ -147,3 +149,4 @@ while read p; do
 		$DNF update -y --disablerepo=* --enablerepo=repo-local-build
 	fi
 done <./rpms.list
+date +"%Y-%m-%d %H:%M:%S"

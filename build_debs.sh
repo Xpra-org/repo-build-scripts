@@ -1,5 +1,6 @@
 #!/bin/bash
 
+date +"%Y-%m-%d %H:%M:%S"
 apt-get update
 apt-get upgrade -y
 apt-get dist-upgrade -y
@@ -25,3 +26,4 @@ fi
 pushd debian
 $BASH ./build.sh
 popd
+date +"%Y-%m-%d %H:%M:%S"
