@@ -77,8 +77,8 @@ while read p; do
 	echo "****************************************************************"
 	echo " $p"
 	SPECFILE="./rpm/$p.spec"
-	rpmspec -q --srpm ${SPECFILE} | sort > "/tmp/${p}.srpmlist"
-	rpmspec -q --rpms ${SPECFILE} | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
+	rpmspec -q --srpm ${SPECFILE} | egrep -v "debuginfo|debugsource|-doc-" | sort > "/tmp/${p}.srpmlist"
+	rpmspec -q --rpms ${SPECFILE} | egrep -v "debuginfo|debugsource|-doc-" | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
 	cp "/tmp/${p}.rpmslist" "/tmp/${p}.list"
 	rpmcount=`wc -l "/tmp/${p}.list" | awk '{print $1}'`
 	if [ "${rpmcount}" -gt "1" ]; then
@@ -96,16 +96,7 @@ while read p; do
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
 		else
-			if [[ $dep == *debuginfo* ]]; then
-				echo "   ignore missing debuginfo ${dep}"
-			elif [[ $dep == *debugsource* ]]; then
-				echo "   ignore missing debugsource ${dep}"
-			elif [[ $dep == *-doc-* ]]; then
-				echo "   ignore missing doc ${dep}"
-			else
-				echo " * missing ${dep}"
-				MISSING="${MISSING} ${dep}"
-			fi
+			MISSING="${MISSING} ${dep}"
 		fi
 	done < "/tmp/${p}.list"
 	if [ ! -z "${MISSING}" ]; then
