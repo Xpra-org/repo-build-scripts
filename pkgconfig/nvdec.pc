@@ -1,12 +1,12 @@
 prefix=/opt/nvenc
 exec_prefix=${prefix}
 includedir=${prefix}/Interface
-libdir=/usr/lib64/nvidia
+libdir=${prefix}/Lib/linux/stubs/x86_64/
 
 
 Name: nvdec
 Description: NVDEC
-Version: 10
+Version: 12
 Requires: 
 Conflicts:
 Libs: -L${libdir} -lnvcuvid
