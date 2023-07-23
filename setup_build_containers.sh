@@ -156,7 +156,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:kinetic Ubuntu:lunar Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:trixie Debian:sid}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:kinetic Ubuntu:lunar Ubuntu:mantic Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:trixie Debian:sid}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
