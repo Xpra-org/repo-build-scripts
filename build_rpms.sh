@@ -1,11 +1,11 @@
 #!/bin/bash
 
 date +"%Y-%m-%d %H:%M:%S"
-dnf --version >& /dev/null
+dnf-3 --version >& /dev/null
 if [ "$?" == "0" ]; then
-	DNF="${DNF:-dnf}"
+	DNF="${DNF:-dnf-3}"
 else
-	DNF="${DNF:-yum}"
+	DNF="${DNF:-dnf}"
 fi
 createrepo_c --version >& /dev/null
 if [ "$?" == "0" ]; then
