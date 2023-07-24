@@ -130,7 +130,7 @@ for DISTRO in $DISTROS; do
 				buildah copy $TEMP_IMAGE "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
 			done
 		fi
-		if [ "${ARCH}" != "x86_64" ]; then
+		if [ "${ARCH}" == "arm64" ]; then
 			NVIDIA_PC_FILES="cuda nvenc nvjpeg"
 		fi
 		for pc_file in ${NVIDIA_PC_FILES}; do
