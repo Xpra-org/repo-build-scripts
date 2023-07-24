@@ -60,7 +60,7 @@ for DISTRO in $DISTROS; do
 	TEMP_IMAGE="$IMAGE_NAME-temp"
 	buildah rm "${TEMP_IMAGE}" >& /dev/null
 	buildah rmi "${TEMP_IMAGE}" >& /dev/null
-	buildah from --pull-never --name  $TEMP_IMAGE $IMAGE_NAME || die "failed to pull image $IMAGE_NAME"
+	buildah from --arch ${ARCH} --pull-never --name  $TEMP_IMAGE $IMAGE_NAME || die "failed to pull image $IMAGE_NAME"
 	if [ "$?" != "0" ]; then
 		echo "cannot build $DISTRO : image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
 		continue
