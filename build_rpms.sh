@@ -77,8 +77,8 @@ while read p; do
 	echo "****************************************************************"
 	echo " $p"
 	SPECFILE="./rpm/$p.spec"
-	rpmspec -q --srpm ${SPECFILE} | egrep -v "debuginfo|debugsource|-doc-" | sort > "/tmp/${p}.srpmlist"
-	rpmspec -q --rpms ${SPECFILE} | egrep -v "debuginfo|debugsource|-doc-" | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
+	rpmspec -q --srpm ${SPECFILE} | grep -Ev "debuginfo|debugsource|-doc-" | sort > "/tmp/${p}.srpmlist"
+	rpmspec -q --rpms ${SPECFILE} | grep -Ev "debuginfo|debugsource|-doc-" | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
 	cp "/tmp/${p}.rpmslist" "/tmp/${p}.list"
 	rpmcount=`wc -l "/tmp/${p}.list" | awk '{print $1}'`
 	if [ "${rpmcount}" -gt "1" ]; then

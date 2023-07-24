@@ -67,7 +67,7 @@ for DISTRO in $DISTROS; do
 	fi
 	echo "$DISTRO : $IMAGE_NAME"
 	buildah run $TEMP_IMAGE mkdir -p /opt /src/repo /src/pkgs src/rpm /src/debian /var/cache/dnf || die "failed to create directories"
-	echo "$DISTRO" | egrep -iv "fedora|centos|almalinux|rockylinux|oraclelinux" >& /dev/null
+	echo "$DISTRO" | grep -Eiv "fedora|centos|almalinux|rockylinux|oraclelinux" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		LIB="/usr/lib64"

@@ -21,12 +21,12 @@ for DISTRO in $DISTROS; do
 		continue
 	fi
 	echo $DISTRO : $IMAGE_NAME
-	echo $DISTRO | egrep -iv "fedora|centos|rockylinux|oraclelinux|almalinux" >& /dev/null
+	echo $DISTRO | grep -Eiv "fedora|centos|rockylinux|oraclelinux|almalinux" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		CREATEREPO="createrepo"
 		PM="dnf"
-		echo $DISTRO | egrep -qi "centos:7|centos-7|centos7"
+		echo $DISTRO | grep -Eqi "centos:7|centos-7|centos7"
 		if [ "$?" == "0" ]; then
 			PM="yum"
 		fi
