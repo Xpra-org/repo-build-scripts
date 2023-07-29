@@ -7,14 +7,14 @@ apt-get dist-upgrade -y
 apt-get autoremove -y
 apt-get install -y devscripts equivs
 
-eval `dpkg-architecture -s`
+eval "$(dpkg-architecture -s)"
 if [ ! -z "$DEB_BUILD_ARCH" ]; then
 	REPO_ARCH_PATH="`pwd`/repo/main/binary-$DEB_BUILD_ARCH"
 	export REPO_ARCH_PATH
-	mkdir -p $REPO_ARCH_PATH
+	mkdir -p "$REPO_ARCH_PATH"
 fi
 
-BASH="bash -x"
+BASH="bash"
 if [ "${DEBUG:-0}" == "1" ]; then
 	BASH="bash -x"
 
@@ -23,7 +23,7 @@ if [ "${DEBUG:-0}" == "1" ]; then
 	ls -la pkgs
 fi
 
-pushd debian
+pushd debian || exit 1
 $BASH ./build.sh
-popd
+popd || exit 1
 date +"%Y-%m-%d %H:%M:%S"

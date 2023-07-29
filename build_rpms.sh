@@ -1,26 +1,24 @@
 #!/bin/bash
 
 date +"%Y-%m-%d %H:%M:%S"
-dnf-3 --version >& /dev/null
-if [ "$?" == "0" ]; then
+if ! dnf-3 --version >& /dev/null; then
 	DNF="${DNF:-dnf-3}"
 else
 	DNF="${DNF:-dnf}"
 fi
-createrepo_c --version >& /dev/null
-if [ "$?" == "0" ]; then
+if ! createrepo_c --version >& /dev/null; then
 	CREATEREPO="${CREATEREPO:-createrepo_c}"
 else
 	CREATEREPO="${CREATEREPO:-createrepo}"
 fi
 
-if [ `id -u` != "0" ]; then
+if [ "$(id -u)" != "0" ]; then
 	if [ "${DNF}" == "dnf" ]; then
 		echo "Warning: this script usually requires root to be able to run dnf"
 	fi
 fi
 
-ARCH=`arch`
+ARCH="$(arch)"
 for dir in "./repo/SRPMS" "./repo/$ARCH"; do
 	echo "* (re)creating repodata in $dir"
 	mkdir $dir 2> /dev/null
@@ -33,17 +31,17 @@ done
 #so the spec file can generate the expected file names
 #(ie: xpra-4.2-0.r29000)
 XPRA_REVISION="0"
-XPRA_TAR_XZ=`ls -d pkgs/xpra-* | grep -v html5 | sort -V | tail -n 1`
+# shellcheck disable=SC2010
+XPRA_TAR_XZ=$(ls -d pkgs/xpra-* | grep -v html5 | sort -V | tail -n 1)
 if [ -z "${XPRA_TAR_XZ}" ]; then
 	echo "Warning: xpra source not found"
 else
 	rm -fr xpra-*
-	tar -Jxf ${XPRA_TAR_XZ} "xpra-*/xpra/src_info.py"
-	if [ "$?" != "0" ]; then
+	if ! tar -Jxf "${XPRA_TAR_XZ}" "xpra-*/xpra/src_info.py"; then
 		echo "failed to extract src_info"
 		exit 1
 	fi
-	XPRA_REVISION=`grep "REVISION=" xpra-*/xpra/src_info.py | awk -F= '{print $2}'`
+	XPRA_REVISION=$(grep "REVISION=" xpra-*/xpra/src_info.py | awk -F= '{print $2}')
 	if [ -z "${XPRA_REVISION}" ]; then
 		echo "revision not found in src_info.py"
 		exit 1
@@ -74,13 +72,27 @@ while read p; do
 		#skip comments
 		continue
 	fi
+	if [[ $p =~ [=] ]]; then
+	  #parse as environment variables:
+    varname=${p%%=*}
+    value=${p#*=}
+    if [ -z "${value}" ]; then
+      echo " clearing ${varname}"
+      unset "$varname"
+    else
+      echo " declaring ${varname}=${value}"
+      declare -x "$varname=$value"
+    fi
+    continue
+	fi
+
 	echo "****************************************************************"
 	echo " $p"
 	SPECFILE="./rpm/$p.spec"
-	rpmspec -q --srpm ${SPECFILE} | grep -Ev "debuginfo|debugsource|-doc-" | sort > "/tmp/${p}.srpmlist"
-	rpmspec -q --rpms ${SPECFILE} | grep -Ev "debuginfo|debugsource|-doc-" | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
+	rpmspec -q --srpm "${SPECFILE}" | grep -Ev "debuginfo|debugsource|-doc-" | sort > "/tmp/${p}.srpmlist"
+	rpmspec -q --rpms "${SPECFILE}" | grep -Ev "debuginfo|debugsource|-doc-" | sed 's/\.src$//g' | sort > "/tmp/${p}.rpmslist"
 	cp "/tmp/${p}.rpmslist" "/tmp/${p}.list"
-	rpmcount=`wc -l "/tmp/${p}.list" | awk '{print $1}'`
+	rpmcount=$(wc -l "/tmp/${p}.list" | awk '{print $1}')
 	if [ "${rpmcount}" -gt "1" ]; then
 		#multiple rpms from this spec file
 		#so remove the srpm from the list of all rpms
@@ -89,9 +101,9 @@ while read p; do
 	MISSING=""
 	while read -r dep; do
 		if [ "$DNF" == "yum" ]; then
-			MATCHES=`repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l`
+			MATCHES=$(repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l)
 		else
-			MATCHES=`$DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l`
+			MATCHES=$($DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l)
 		fi
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
@@ -103,21 +115,14 @@ while read p; do
 		echo " need to rebuild $p to get:${MISSING}"
 		date +"%Y-%m-%d %H:%M:%S"
 		echo " - installing build dependencies"
-		yum-builddep --version >& /dev/null
-		if [ "$?" == "0" ]; then
-			yum-builddep -y ${SPECFILE} > builddep.log
-		else
-			$DNF builddep -y ${SPECFILE} > builddep.log
-		fi
-		if [ "$?" != "0" ]; then
+    if ! $DNF builddep -y ${SPECFILE} > builddep.log; then
 			echo "-------------------------------------------"
 			echo "builddep failed:"
 			cat builddep.log
 			exit 1
 		fi
 		echo " - building RPM package(s)"
-		rpmbuild --define "_topdir `pwd`/rpmbuild" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log
-		if [ "$?" != "0" ]; then
+		if ! rpmbuild --define "_topdir `pwd`/rpmbuild" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log; then
 			echo "-------------------------------------------"
 			echo "rpmbuild failed:"
 			cat rpmbuild.log
@@ -128,8 +133,7 @@ while read p; do
 		#update the local repo:
 		echo " - re-creating repository metadata"
 		for dir in "./repo/SRPMS" "./repo/$ARCH"; do
-			${CREATEREPO} $dir >& createrepo.log
-			if [ "$?" != "0" ]; then
+			if ! ${CREATEREPO} $dir >& createrepo.log; then
 				echo "-------------------------------------------"
 				echo "'createrepo $dir' failed"
 				cat createrepo.log

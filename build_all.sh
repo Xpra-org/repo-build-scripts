@@ -7,8 +7,8 @@ if [ "${DEBUG:-0}" == "1" ]; then
 	BASH="bash -x"
 fi
 
-BUILDAH_DIR=`dirname $(readlink -f $0)`
-cd ${BUILDAH_DIR}
+BUILDAH_DIR=$(dirname "$(readlink -f $0)")
+cd "${BUILDAH_DIR}" || exit 1
 
 mkdir cache >& /dev/null
 rm -fr cache/ldconfig cache/libX11 cache/debconf cache/man
@@ -26,7 +26,7 @@ fi
 
 if [ -z "${DISTROS}" ]; then
 	#default to build all distros found:
-	DISTROS=`buildah images | grep '\-repo-build' | grep -v "temp" | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vF "." | sort -V`
+	DISTROS=$(buildah images | grep '\-repo-build' | grep -v "temp" | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vF "." | sort -V)
 fi
 
 for DISTRO in $DISTROS; do
@@ -34,22 +34,22 @@ for DISTRO in $DISTROS; do
 	echo "********************************************************************************"
 	#ie: DISTRO="Fedora:35:arm64" or "ubuntu-focal"
 	# DISTRO_NAME="fedora-35-arm64"
-	FULL_DISTRO_NAME=`echo ${DISTRO,,} | sed 's/:/-/g'`
+	FULL_DISTRO_NAME=$(echo ${DISTRO,,} | sed 's/:/-/g')
 	#split parts:
 	#1=Fedora
-	DISTRO_NAME=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $1}'`
+	DISTRO_NAME=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $1}')
 	if [ "${DISTRO_NAME}" == "fedora" ]; then
 		DISTRO_NAME="Fedora"
 	elif [ "${DISTRO_NAME}" == "centos" ]; then
 		DISTRO_NAME="CentOS"
 	fi
 	#2=35
-	DISTRO_VARIANT=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $2}'`
+	DISTRO_VARIANT=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $2}')
 	#strip centos from distro variant:
 	#ie: centos7.6.1801 -> 7.6.1801
 	DISTRO_VARIANT="${DISTRO_VARIANT#centos}"
 	#3=arm64
-	ARCH=`echo ${FULL_DISTRO_NAME} | awk -F- '{print $3}'`
+	ARCH=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $3}')
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
@@ -60,8 +60,7 @@ for DISTRO in $DISTROS; do
 	TEMP_IMAGE="$IMAGE_NAME-temp"
 	buildah rm "${TEMP_IMAGE}" >& /dev/null
 	buildah rmi "${TEMP_IMAGE}" >& /dev/null
-	buildah from --arch ${ARCH} --pull-never --name  $TEMP_IMAGE $IMAGE_NAME || die "failed to pull image $IMAGE_NAME"
-	if [ "$?" != "0" ]; then
+	if ! buildah from --arch ${ARCH} --pull-never --name  "$TEMP_IMAGE" "$IMAGE_NAME"; then
 		echo "cannot build $DISTRO : image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
 		continue
 	fi
@@ -90,9 +89,9 @@ for DISTRO in $DISTROS; do
 		for list_name in ${RPM_LIST_OPTIONS}; do
 			#prefer lists found in rpm/distros/
 			if [ -r "${PACKAGING}/rpm/distros/${list_name}.list" ]; then
-				rpm_list_path=`readlink -e ${PACKAGING}/rpm/distros/${list_name}.list`
+				rpm_list_path=$(readlink -e "${PACKAGING}/rpm/distros/${list_name}.list")
 				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
+				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
 			fi
 			#old location:
@@ -102,9 +101,9 @@ for DISTRO in $DISTROS; do
 				rpm_list="${PACKAGING}/rpm/${list_name}-rpms.txt"
 			fi
 			if [ -r "${rpm_list}" ]; then
-				rpm_list_path=`readlink -e ${rpm_list}`
+				rpm_list_path=$(readlink -e "${rpm_list}")
 				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy $TEMP_IMAGE "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
+				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
 			fi
 		done
@@ -116,8 +115,8 @@ for DISTRO in $DISTROS; do
 		BUILD_SCRIPT="build_debs.sh"
 		echo "DEB: $REPO_PATH"
 	fi
-	buildah copy $TEMP_IMAGE "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}" || die "failed to copy build script"
-	mkdir -p $REPO_PATH >& /dev/null
+	buildah copy "$TEMP_IMAGE" "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}" || die "failed to copy build script"
+	mkdir -p "$REPO_PATH" >& /dev/null
 
 	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
 	NVIDIA_CODECS="${NVIDIA_CODECS:-1}"
@@ -126,8 +125,9 @@ for DISTRO in $DISTROS; do
 		if [ "${ARCH}" == "x86_64" ]; then
 			NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
 			#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
-			for lib in `ls /usr/lib64/libnvidia-fbc.so*`; do
-				buildah copy $TEMP_IMAGE "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
+			# shellcheck disable=SC2045
+			for lib in $(ls /usr/lib64/libnvidia-fbc.so*); do
+				buildah copy "$TEMP_IMAGE" "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
 			done
 		fi
 		if [ "${ARCH}" == "arm64" ]; then
@@ -137,38 +137,38 @@ for DISTRO in $DISTROS; do
 			#find the file, which may be arch specific:
 			for t in "$pc_file-$ARCH.pc" "$pc_file.pc"; do
 				if [ -r "./pkgconfig/$t" ]; then
-					buildah copy $TEMP_IMAGE "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
+					buildah copy "$TEMP_IMAGE" "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
 					break
 				fi
 			done
 		done
 	fi
 	#manage ./opt/cuda as a symlink to the arch specific version:
-	pushd opt
+	pushd opt || exit 1
 	rm -f cuda
 	ln -sf cuda-$ARCH cuda
-	popd
+	popd || exit 1
 
-	buildah commit $TEMP_IMAGE $TEMP_IMAGE || die "failed to commit $TEMP_IMAGE"
+	buildah commit "$TEMP_IMAGE" "$TEMP_IMAGE" || die "failed to commit $TEMP_IMAGE"
 
-	if [ ! -z "${RUN_CMD}" ]; then
+	if [ -n "${RUN_CMD}" ]; then
 		buildah run \
-					--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
-					--volume ${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z \
-					--volume ${BUILDAH_DIR}/cache:/var/cache:rw,z \
-					--volume ${REPO_PATH}:/src/repo:noexec,nodev,z \
-					--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
-					--volume ${PACKAGING}/debian:/src/debian:O \
-					$TEMP_IMAGE ${RUN_CMD}
+					--volume "${BUILDAH_DIR}/opt:/opt:ro,z" \
+					--volume "${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z" \
+					--volume "${BUILDAH_DIR}/cache:/var/cache:rw,z" \
+					--volume "${REPO_PATH}:/src/repo:noexec,nodev,z" \
+					--volume "${PACKAGING}/rpm:/src/rpm:ro,z" \
+					--volume "${PACKAGING}/debian:/src/debian:O" \
+					"$TEMP_IMAGE" "${RUN_CMD}"
 	else
 		buildah run \
-					--volume ${BUILDAH_DIR}/opt:/opt:ro,z \
-					--volume ${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z \
-					--volume ${BUILDAH_DIR}/cache:/var/cache:rw,z \
-					--volume ${REPO_PATH}:/src/repo:noexec,nodev,z \
-					--volume ${PACKAGING}/rpm:/src/rpm:ro,z \
-					--volume ${PACKAGING}/debian:/src/debian:O \
-					$TEMP_IMAGE $BASH -c "DEBUG=${DEBUG} /src/${BUILD_SCRIPT}" |& tee "./logs/${FULL_DISTRO_NAME}.log"
+					--volume "${BUILDAH_DIR}/opt:/opt:ro,z" \
+					--volume "${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z" \
+					--volume "${BUILDAH_DIR}/cache:/var/cache:rw,z" \
+					--volume "${REPO_PATH}:/src/repo:noexec,nodev,z" \
+					--volume "${PACKAGING}/rpm:/src/rpm:ro,z" \
+					--volume "${PACKAGING}/debian:/src/debian:O" \
+					"$TEMP_IMAGE" ${BASH} -c "DEBUG=${DEBUG} /src/${BUILD_SCRIPT}" |& tee "./logs/${FULL_DISTRO_NAME}.log"
 	fi
 	buildah rmi "${TEMP_IMAGE}"
 	buildah rm "${TEMP_IMAGE}"
