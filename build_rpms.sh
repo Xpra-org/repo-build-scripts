@@ -26,29 +26,6 @@ for dir in "./repo/SRPMS" "./repo/$ARCH"; do
 	${CREATEREPO} $dir > /dev/null
 done
 
-#if we are going to build xpra,
-#make sure we expose the revision number
-#so the spec file can generate the expected file names
-#(ie: xpra-4.2-0.r29000)
-XPRA_REVISION="0"
-# shellcheck disable=SC2010
-XPRA_TAR_XZ=$(ls -d pkgs/xpra-* | grep -v html5 | sort -V | tail -n 1)
-if [ -z "${XPRA_TAR_XZ}" ]; then
-	echo "Warning: xpra source not found"
-else
-	rm -fr xpra-*
-	if ! tar -Jxf "${XPRA_TAR_XZ}" "xpra-*/xpra/src_info.py"; then
-		echo "failed to extract src_info"
-		exit 1
-	fi
-	XPRA_REVISION=$(grep "REVISION=" xpra-*/xpra/src_info.py | awk -F= '{print $2}')
-	if [ -z "${XPRA_REVISION}" ]; then
-		echo "revision not found in src_info.py"
-		exit 1
-	fi
-fi
-
-
 #prepare rpmbuild (assume we're going to build something):
 rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS"
 mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS" 2> /dev/null
@@ -122,7 +99,7 @@ while read p; do
 			exit 1
 		fi
 		echo " - building RPM package(s)"
-		if ! rpmbuild --define "_topdir `pwd`/rpmbuild" --define "xpra_revision_no ${XPRA_REVISION}" -ba $SPECFILE >& rpmbuild.log; then
+		if ! rpmbuild --define "_topdir `pwd`/rpmbuild" -ba $SPECFILE >& rpmbuild.log; then
 			echo "-------------------------------------------"
 			echo "rpmbuild failed:"
 			cat rpmbuild.log
