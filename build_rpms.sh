@@ -50,17 +50,17 @@ while read p; do
 		continue
 	fi
 	if [[ $p =~ [=] ]]; then
-	  #parse as environment variables:
-    varname=${p%%=*}
-    value=${p#*=}
-    if [ -z "${value}" ]; then
-      echo " clearing ${varname}"
-      unset "$varname"
-    else
-      echo " declaring ${varname}=${value}"
-      declare -x "$varname=$value"
-    fi
-    continue
+		#parse as environment variables:
+		varname=${p%%=*}
+		value=${p#*=}
+		if [ -z "${value}" ]; then
+			echo " clearing ${varname}"
+			unset "$varname"
+		else
+			echo " declaring ${varname}=${value}"
+			declare -x "$varname=$value"
+		fi
+		continue
 	fi
 
 	echo "****************************************************************"
@@ -92,7 +92,7 @@ while read p; do
 		echo " need to rebuild $p to get:${MISSING}"
 		date +"%Y-%m-%d %H:%M:%S"
 		echo " - installing build dependencies"
-    if ! $DNF builddep -y ${SPECFILE} > builddep.log; then
+		if ! $DNF builddep -y ${SPECFILE} > builddep.log; then
 			echo "-------------------------------------------"
 			echo "builddep failed:"
 			cat builddep.log
@@ -101,7 +101,10 @@ while read p; do
 		echo " - building RPM package(s)"
 		if ! rpmbuild --define "_topdir `pwd`/rpmbuild" -ba $SPECFILE >& rpmbuild.log; then
 			echo "-------------------------------------------"
-			echo "rpmbuild failed:"
+			echo "rpmbuild failed"
+			echo "builddep log:"
+			cat builddep.log
+			echo "rpmbuild log:"
 			cat rpmbuild.log
 			exit 1
 		fi
