@@ -8,6 +8,7 @@ repo_gpgcheck=0
 gpgcheck=0
 type=rpm
 skip_if_unavailable=False
+module_hotfixes=1
 
 [repo-local-source]
 name=Repo Local Source $releasever - $basearch
