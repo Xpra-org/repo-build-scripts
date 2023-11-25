@@ -38,6 +38,10 @@ cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
 cp ./pkgs/* "rpmbuild/SOURCES/"
 cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
 
+echo "Package list:"
+cat ./rpms.list
+echo
+
 
 #read the name of the spec files we may want to build:
 while read p; do
