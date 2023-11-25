@@ -107,6 +107,8 @@ for DISTRO in $DISTROS; do
 				break
 			fi
 		done
+		# the repo file may need updating:
+		buildah copy "$TEMP_IMAGE" ./local-build.repo /etc/yum.repos.d/ || die "failed to copy ./local-build.repo"
 		BUILD_SCRIPT="build_rpms.sh"
 		echo "RPM: $REPO_PATH"
 	else
