@@ -127,6 +127,7 @@ for DISTRO in $RPM_DISTROS; do
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
 			RHEL8=1
+			buildah run $IMAGE_NAME rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
 			RHEL9=1
