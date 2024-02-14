@@ -11,7 +11,7 @@ BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:37 Fedora:37:arm64 Fedora:38 Fedora:38:arm64 almalinux:8.8 almalinux:8.9 rockylinux:8.8 rockylinux:8.9 oraclelinux:8.8 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9.3 almalinux:9.2 rockylinux:9.2 rockylinux:9.3 oraclelinux:9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:39 Fedora:39:arm64 Fedora:38 Fedora:38:arm64 almalinux:8.8 almalinux:8.9 rockylinux:8.8 rockylinux:8.9 oraclelinux:8.8 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 almalinux:9.3 almalinux:9.2 rockylinux:9.2 rockylinux:9.3 oraclelinux:9}
 #other distros we can build for:
 # CentOS:stream8
 # CentOS:centos8.3.2011 CentOS:8.4.2105
@@ -157,7 +157,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:lunar Ubuntu:lunar:arm64 Ubuntu:mantic Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:trixie Debian:trixie:arm64 Debian:trixie:riscv64 Debian:sid Debian:sid:arm64 Debian:sid:riscv64}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:lunar Ubuntu:lunar:arm64 Ubuntu:lunar:riscv64 Ubuntu:mantic Debian:bullseye Debian:bullseye:arm64 Debian:bookworm Debian:bookworm:arm64 Debian:bookworm:riscv64 Debian:trixie Debian:trixie:arm64 Debian:trixie:riscv64 Debian:sid Debian:sid:arm64 Debian:sid:riscv64}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
