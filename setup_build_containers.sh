@@ -110,6 +110,10 @@ for DISTRO in $RPM_DISTROS; do
 			EPEL="epel-next-release"
 			RHEL9=1
 		fi
+		if [[ "${DISTRO_LOWER}" == *"stream10"* ]]; then
+			EPEL="epel-next-release"
+			RHEL10=1
+		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
 			RHEL8=1
 			#the development headers live in this repo:
@@ -135,7 +139,7 @@ for DISTRO in $RPM_DISTROS; do
 		if [ "${RHEL8}" == "1" ]; then
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
-		if [ "${RHEL9}" == "1" ]; then
+		if [ "${RHEL9}" == "1" ] || [ "${RHEL10}" == "1" ]; then
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled crb
 		fi

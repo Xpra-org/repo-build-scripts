@@ -32,12 +32,12 @@ fi
 for DISTRO in $DISTROS; do
 	echo
 	echo "********************************************************************************"
-	#ie: DISTRO="Fedora:35:arm64" or "ubuntu-focal"
+	#ie: DISTRO="Fedora:35:arm64" or "ubuntu-focal" or "CentOS:stream10-development"
 	# DISTRO_NAME="fedora-35-arm64"
 	FULL_DISTRO_NAME=$(echo ${DISTRO,,} | sed 's/:/-/g')
 	#split parts:
 	#1=Fedora
-	DISTRO_NAME=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $1}')
+	DISTRO_NAME=$(echo "${FULL_DISTRO_NAME}" | sed 's/-.*//g')
 	if [ "${DISTRO_NAME}" == "fedora" ]; then
 		DISTRO_NAME="Fedora"
 	elif [ "${DISTRO_NAME}" == "centos" ]; then
@@ -50,6 +50,11 @@ for DISTRO in $DISTROS; do
 	DISTRO_VARIANT="${DISTRO_VARIANT#centos}"
 	#3=arm64
 	ARCH=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $3}')
+	if [[ ${ARCH}  = development* ]]; then
+	  # oops, this is not the arch..
+	  DISTRO_VARIANT="${DISTRO_VARIANT}-development"
+		ARCH=$(echo "${ARCH}" | sed 's/development-\?//g')
+	fi
 	if [ -z "${ARCH}" ]; then
 		ARCH="x86_64"
 	fi
