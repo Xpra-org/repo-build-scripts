@@ -70,6 +70,9 @@ for DISTRO in $DISTROS; do
 		continue
 	fi
 	echo "$DISTRO : $IMAGE_NAME"
+	if [ "${FULL_DISTRO_NAME}" == "centos-7" ]; then
+		buildah copy $TEMP_IMAGE CentOS-Base.repo "/etc/yum.repos.d/" || die "failed to copy CentOS-Base.repo list"
+	fi
 	buildah run $TEMP_IMAGE mkdir -p /opt /src/repo /src/pkgs src/rpm /src/debian /var/cache/dnf || die "failed to create directories"
 	echo "$DISTRO" | egrep -iv "fedora|centos|almalinux|rockylinux|oraclelinux" >& /dev/null
 	RPM="$?"
