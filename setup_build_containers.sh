@@ -100,47 +100,45 @@ for DISTRO in $RPM_DISTROS; do
 		#with stream8 and stream9,
 		#we have to enable EPEL to get the PowerTools repo:
 		EPEL="epel-release"
-		RHEL8=0
-		RHEL9=0
+		RHEL=0
 		if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
 			EPEL="epel-next-release"
-			RHEL8=1
+			RHEL=8
 		fi
 		if [[ "${DISTRO_LOWER}" == *"stream9"* ]]; then
 			EPEL="epel-next-release"
-			RHEL9=1
+			RHEL=9
 		fi
 		if [[ "${DISTRO_LOWER}" == *"stream10"* ]]; then
 			EPEL="epel-next-release"
-			RHEL10=1
+			RHEL=10
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
-			RHEL8=1
+			RHEL=8
 			#the development headers live in this repo:
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol8_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
-			RHEL9=1
+			RHEL=9
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol9_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
-			RHEL8=1
+			RHEL=8
 		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:9"* ]]; then
-			RHEL9=1
+			RHEL=9
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
-			RHEL8=1
+			RHEL=8
 			buildah run $IMAGE_NAME rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
-			RHEL9=1
+			RHEL=9
 		fi
-		if [ "${RHEL8}" == "1" ]; then
+		if [ "${RHEL}" != "0" ]; then
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
-		if [ "${RHEL9}" == "1" ] || [ "${RHEL10}" == "1" ]; then
-			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
+		if [[ "${RHEL}" -ge "9" ]]; then
 			buildah run $IMAGE_NAME dnf config-manager --set-enabled crb
 		fi
 		#CentOS 8 and later:
