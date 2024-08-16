@@ -17,13 +17,13 @@ pushd ${BUILDAH_DIR}
 # (why oh why all this unnecessary breakage)
 enable_repo() {
 	repo=$1
-	repofile="/etc/yum.repos.d/${repo}.repo"
-	buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=1/g' ${repofile} || true"
+	# repofile="/etc/yum.repos.d/${repo}.repo"
+	# buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=1/g' ${repofile} || true"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-enabled ${repo}"
 }
 disable_repo() {
 	repo=$1
-	repofile="/etc/yum.repos.d/${repo}.repo"
-	buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=0/g' ${repofile} || true"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-disabled ${repo}"
 }
 
 #arm64 builds require qemu-aarch64-static
