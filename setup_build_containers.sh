@@ -10,6 +10,22 @@ fi
 BUILDAH_DIR=`dirname $(readlink -f $0)`
 pushd ${BUILDAH_DIR}
 
+
+# dnf5 completely broke this:
+# `buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo`
+# and the recommended alternative is not backwards compatible!
+# (why oh why all this unnecessary breakage)
+enable_repo() {
+	repo=$1
+	repofile="/etc/yum.repos.d/${repo}.repo"
+	buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=1/g' ${repofile} || true"
+}
+disable_repo() {
+	repo=$1
+	repofile="/etc/yum.repos.d/${repo}.repo"
+	buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=0/g' ${repofile} || true"
+}
+
 #arm64 builds require qemu-aarch64-static
 RPM_DISTROS=${RPM_DISTROS:-Fedora:40 Fedora:40:arm64 Fedora:39 Fedora:39:arm64 almalinux:8.8 almalinux:8.9 almalinux:8.10 rockylinux:8.8 rockylinux:8.9 oraclelinux:8.8 oraclelinux:8.9 oraclelinux:8.10 CentOS:stream8 CentOS:stream8:arm64 CentOS:stream9 CentOS:stream9:arm64 almalinux:9.4 almalinux:9.3 almalinux:9.2 rockylinux:9.2 rockylinux:9.3 rockylinux:9.4 oraclelinux:9}
 #other distros we can build for:
@@ -58,6 +74,8 @@ for DISTRO in $RPM_DISTROS; do
 		buildah run $IMAGE_NAME bash -c "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.epel.cloud|g' /etc/yum.repos.d/CentOS-Linux-*"
 	fi
 
+	buildah copy $IMAGE_NAME "./local-build.repo" "/etc/yum.repos.d/"
+
 	if [[ "${DISTRO_LOWER}" == "fedora"* ]]; then
 		#first install the config-manager plugin,
 		#only enable the repo containing this plugin:
@@ -67,11 +85,10 @@ for DISTRO in $RPM_DISTROS; do
 		#but we don't want to use them
 		#(any repository failures would cause problems)
 		for repo in fedora-modular updates-modular updates-testing-modular updates-testing-modular-debuginfo updates-testing-modular-source; do
-			#buildah run $IMAGE_NAME dnf config-manager --save "--setopt=$repo.skip_if_unavailable=true" $repo
-			buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo
+			disable_repo $repo
 		done
 		#enable openh264:
-		buildah run $IMAGE_NAME dnf config-manager --set-enabled fedora-cisco-openh264
+		enable_repo fedora-cisco-openh264
 		#add rpmfusion:
 		buildah run $IMAGE_NAME bash -c "dnf install -y \"https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source || dnf install -y \"https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${DISTRO_MAJOR_NO}.noarch.rpm\" --disablerepo=repo-local-build --disablerepo=repo-local-source"
 	else
@@ -116,11 +133,11 @@ for DISTRO in $RPM_DISTROS; do
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
 			RHEL=8
 			#the development headers live in this repo:
-			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol8_codeready_builder
+			enable_repo ol8_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:9"* ]]; then
 			RHEL=9
-			buildah run $IMAGE_NAME dnf config-manager --set-enabled ol9_codeready_builder
+			enable_repo ol9_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 			RHEL=8
@@ -139,22 +156,21 @@ for DISTRO in $RPM_DISTROS; do
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
 		if [[ "${RHEL}" -ge "9" ]]; then
-			buildah run $IMAGE_NAME dnf config-manager --set-enabled crb
+			enable_repo crb
 		fi
 		#CentOS 8 and later:
 		#there is no "rpmspectool" package so we have to use pip to install it:
 		buildah run $IMAGE_NAME dnf install -y python3-pip --disablerepo=repo-local-build --disablerepo=repo-local-source
 		buildah run $IMAGE_NAME pip3 install python-rpm-spec
 		#try different spellings because they've made it case sensitive and renamed the repo..
-		buildah run $IMAGE_NAME dnf config-manager --set-enabled PowerTools
-		buildah run $IMAGE_NAME dnf config-manager --set-enabled powertools
+		enable_repo PowerTools
+		enable_repo powertools
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run dnf clean all
 
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
-	buildah copy $IMAGE_NAME "./local-build.repo" "/etc/yum.repos.d/"
 	buildah run $IMAGE_NAME createrepo "/src/repo/"
 	buildah commit $IMAGE_NAME $IMAGE_NAME
 done
