@@ -1,7 +1,7 @@
 #!/bin/bash
 
 date +"%Y-%m-%d %H:%M:%S"
-if ! dnf-3 --version >& /dev/null; then
+if dnf-3 --version >& /dev/null; then
 	DNF="${DNF:-dnf-3}"
 else
 	DNF="${DNF:-dnf}"
