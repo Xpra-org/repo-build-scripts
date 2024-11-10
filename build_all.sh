@@ -18,6 +18,18 @@ if [ ! -e "${PACKAGING}" ]; then
 	echo "${PACKAGING} should point to the repository build definitions"
 	exit 1
 fi
+TARGET_REPO_FILE="${PACKAGING}/target-repository"
+if [ ! -e "${TARGET_REPO_FILE}" ]; then
+  echo "${TARGET_REPO_FILE} does not exist!"
+  exit 1
+fi
+TARGET_REPO=`cat ${TARGET_REPO_FILE} | tr -d '\n\r '`
+if [[ $TARGET_REPO = @(beta|stable|lts) ]]; then
+  echo "targeting the ${TARGET_REPO} repository"
+else
+  echo "invalid target repository ${TARGET_REPO}"
+  exit 1
+fi
 
 DO_DOWNLOAD="${DO_DOWNLOAD:-1}"
 if [ "${DO_DOWNLOAD}" == "1" ]; then
@@ -75,7 +87,7 @@ for DISTRO in $DISTROS; do
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
 		LIB="/usr/lib64"
-		REPO_PATH="${BUILDAH_DIR}/repo/${DISTRO_NAME}/${DISTRO_VARIANT}"
+		REPO_PATH="${BUILDAH_DIR}/repos/${TARGET_REPO}/${DISTRO_NAME}/${DISTRO_VARIANT}"
 		DISTRO_ARCH_NAME="${DISTRO_NAME,,}-${ARCH,,}"
 		RPM_LIST_OPTIONS="${FULL_DISTRO_NAME}"
 		variant="${DISTRO_VARIANT,,}"
@@ -118,7 +130,7 @@ for DISTRO in $DISTROS; do
 		echo "RPM: $REPO_PATH"
 	else
 		LIB="/usr/lib"
-		REPO_PATH="${BUILDAH_DIR}/repo/$DISTRO_VARIANT"
+		REPO_PATH="${BUILDAH_DIR}/repos/${TARGET_REPO}/$DISTRO_VARIANT"
 		BUILD_SCRIPT="build_debs.sh"
 		echo "DEB: $REPO_PATH"
 	fi
