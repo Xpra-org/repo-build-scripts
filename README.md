@@ -25,8 +25,8 @@ The resulting `RPM` and `DEB` packages are found in the `./repo` directory.
 You may want to specify which distributions you want to setup:
 
 ```
-RPM_DISTROS="Fedora:34" ./setup_build_containers.sh
-DISTROS="Fedora:34" ./build_all.sh
+DEB_DISTROS="xx" RPM_DISTROS="Fedora:41" ./setup_build_containers.sh
+DISTROS="Fedora:41" ./build_all.sh
 ```
 
 For more details, refer to the (ugly) scripts themselves. 
