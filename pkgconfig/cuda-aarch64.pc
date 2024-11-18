@@ -1,0 +1,10 @@
+cudaroot=/opt/cuda/
+libdir=${cudaroot}/targets/sbsa-linux/lib/stubs/
+includedir=${cudaroot}/targets/sbsa-linux/include
+
+Name: cuda
+Description: CUDA Driver Library
+Version: 12.6
+Libs: -L${libdir} -lcuda
+#for GCC versions 8.0 and older, add: "-Wno-error=sign-compare"
+Cflags: -I${includedir} -Wno-error=deprecated-declarations
