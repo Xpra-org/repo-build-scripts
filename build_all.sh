@@ -142,7 +142,7 @@ for DISTRO in $DISTROS; do
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
 		NVIDIA_PC_FILES=""
 		if [ "${ARCH}" == "x86_64" ]; then
-			NVIDIA_PC_FILES="cuda nvenc nvjpeg nvfbc"
+			NVIDIA_PC_FILES="cuda cuda-x86_64 nvenc nvjpeg nvfbc"
 			#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
 			# shellcheck disable=SC2045
 			for lib in $(ls /usr/lib64/libnvidia-fbc.so*); do
@@ -150,7 +150,7 @@ for DISTRO in $DISTROS; do
 			done
 		fi
 		if [ "${ARCH}" == "arm64" ]; then
-			NVIDIA_PC_FILES="cuda nvenc nvjpeg"
+			NVIDIA_PC_FILES="cuda cuda-arm64 nvenc nvjpeg"
 		fi
 		for pc_file in ${NVIDIA_PC_FILES}; do
 			#find the file, which may be arch specific:
@@ -165,7 +165,9 @@ for DISTRO in $DISTROS; do
 	#manage ./opt/cuda as a symlink to the arch specific version:
 	pushd opt || exit 1
 	rm -f cuda
-	ln -sf cuda-$ARCH cuda
+	if [ -d "cuda-$ARCH" ]; then
+		ln -sf cuda-$ARCH cuda
+	fi
 	popd || exit 1
 
 	buildah commit "$TEMP_IMAGE" "$TEMP_IMAGE" || die "failed to commit $TEMP_IMAGE"
