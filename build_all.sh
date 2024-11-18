@@ -164,8 +164,8 @@ for DISTRO in $DISTROS; do
 	fi
 	#manage ./opt/cuda as a symlink to the arch specific version:
 	pushd opt || exit 1
-	rm -f cuda
 	if [ -d "cuda-$ARCH" ]; then
+		rm -f cuda
 		ln -sf cuda-$ARCH cuda
 	fi
 	popd || exit 1
