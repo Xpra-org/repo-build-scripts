@@ -41,6 +41,9 @@ if [ -z "${DISTROS}" ]; then
 	DISTROS=$(buildah images | grep '\-repo-build' | grep -v "temp" | awk '{print $1}' | sed 's+.*/++g' | sed 's/-repo-build//g' | grep -vF "." | sort -V)
 fi
 
+chcon -t container_file_t ./pkgs/*
+chcon -t container_file_t ./opt/*
+
 for DISTRO in $DISTROS; do
 	echo
 	echo "********************************************************************************"
