@@ -42,7 +42,7 @@ if [ -z "${DISTROS}" ]; then
 fi
 
 chcon -t container_file_t ./pkgs/*
-chcon -t container_file_t ./opt/*
+chcon -Rt container_file_t ./opt/*
 
 for DISTRO in $DISTROS; do
 	echo
