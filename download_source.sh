@@ -36,6 +36,16 @@ function fetch() {
 		fi
 	done
 }
+
+# if not defined yet,
+# point rpmbuild SOURCES to our packages.
+# this avoids errors with the xpra package macros trying to untar it:
+if [ ! -d "$HOME/rpmbuild" ]; then
+       mkdir $HOME/rpmbuild
+       ln -sf `pwd`/pkgs $HOME/rpmbuild/SOURCES
+fi
+
+
 SPECS=`ls packaging/rpm/*.spec | sed 's/.spec//g'`
 pushd pkgs
 for SPEC in $SPECS; do
