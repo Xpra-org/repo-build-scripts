@@ -43,6 +43,10 @@ echo "Package list:"
 cat ./rpms.list
 echo
 
+echo "Sources:"
+ls -laZ "$HOME/rpmbuild/SOURCES"
+echo
+
 
 #read the name of the spec files we may want to build:
 while read p; do
