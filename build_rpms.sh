@@ -27,8 +27,9 @@ for dir in "./repo/SRPMS" "./repo/$ARCH"; do
 done
 
 #prepare rpmbuild (assume we're going to build something):
-rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS"
-mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS" 2> /dev/null
+rm -fr "rpmbuild/RPMS" "rpmbuild/SRPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS" "$HOME/rpmbuild/SOURCES"
+mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuild/SRPMS" "$HOME/rpmbuild/SOURCES" 2> /dev/null
+
 #specfiles and patches
 cp ./rpm/*spec "rpmbuild/SOURCES/"
 cp ./rpm/*spec "$HOME/rpmbuild/SOURCES/"
