@@ -49,10 +49,10 @@ FULL_DISTRO_NAME=$(echo ${DISTRO,,} | sed 's/:/-/g')
 #split parts:
 #1=Fedora
 DISTRO_NAME="CentOS"
-DISTRO_VARIANT=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $2}')
+#DISTRO_VARIANT=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $2}')
 #strip centos from distro variant:
 #ie: centos7.6.1801 -> 7.6.1801
-DISTRO_VARIANT="centos"
+DISTRO_VARIANT="7"
 ARCH="x86_64"
 
 #ie: fedora-35-arm64-repo-build
