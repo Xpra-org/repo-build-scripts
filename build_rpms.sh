@@ -84,6 +84,7 @@ while read p; do
 		#so remove the srpm from the list of all rpms
 		comm -3 "/tmp/${p}.srpmlist" "/tmp/${p}.rpmslist" > "/tmp/${p}.list"
 	fi
+	nosrc=`grep -v ".src" "/tmp/${p}.list" > "/tmp/${p}.nosrclist"`
 	MISSING=""
 	while read -r dep; do
 		if [ "$DNF" == "yum" ]; then
@@ -96,7 +97,7 @@ while read p; do
 		else
 			MISSING="${MISSING} ${dep}"
 		fi
-	done < "/tmp/${p}.list"
+	done < "/tmp/${p}.nosrclist"
 	if [ ! -z "${MISSING}" ]; then
 		echo " need to rebuild $p to get:${MISSING}"
 		date +"%Y-%m-%d %H:%M:%S"
