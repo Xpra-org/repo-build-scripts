@@ -152,6 +152,9 @@ for DISTRO in $RPM_DISTROS; do
 		if [[ "${DISTRO_LOWER}" == *"almalinux:9"* ]]; then
 			RHEL=9
 		fi
+		if [[ "${DISTRO_LOWER}" == *"almalinux:10"* ]]; then
+			RHEL=10
+		fi
 		if [ "${RHEL}" != "0" ]; then
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
