@@ -65,12 +65,14 @@ for DISTRO in $DISTROS; do
 	DISTRO_VARIANT="${DISTRO_VARIANT#centos}"
 	#3=arm64
 	ARCH=$(echo "${FULL_DISTRO_NAME}" | awk -F- '{print $3}')
-	if [[ ${ARCH}  = development* ]]; then
-	  # oops, this is not the arch..
-	  DISTRO_VARIANT="${DISTRO_VARIANT}-development"
-		ARCH=$(echo "${ARCH}" | sed 's/development-\?//g')
-	fi
-	if [ -z "${ARCH}" ]; then
+	if [ "${ARCH}" ]; then
+		if [ "${ARCH}" == "x86_64" ] || [ "${ARCH}" == "riscv64" ] || [ "${ARCH}" == "arm64" ]; then
+			echo $ARCH
+		else
+			DISTRO_VARIANT="${DISTRO_VARIANT}-${ARCH}"
+			ARCH="x86_64"
+		fi
+	else
 		ARCH="x86_64"
 	fi
 	#ie: fedora-35-arm64-repo-build
