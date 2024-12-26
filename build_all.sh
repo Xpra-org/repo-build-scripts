@@ -116,18 +116,6 @@ for DISTRO in $DISTROS; do
 				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
 			fi
-			#old location:
-			if [ "${list_name}" == "default" ]; then
-				rpm_list="${PACKAGING}/rpm/rpms.txt"
-			else
-				rpm_list="${PACKAGING}/rpm/${list_name}-rpms.txt"
-			fi
-			if [ -r "${rpm_list}" ]; then
-				rpm_list_path=$(readlink -e "${rpm_list}")
-				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
-				break
-			fi
 		done
 		# the repo file may need updating:
 		buildah copy "$TEMP_IMAGE" ./local-build.repo /etc/yum.repos.d/ || die "failed to copy ./local-build.repo"
