@@ -127,7 +127,7 @@ for DISTRO in $RPM_DISTROS; do
 			RHEL=9
 		fi
 		if [[ "${DISTRO_LOWER}" == *"stream10"* ]]; then
-			EPEL="epel-next-release"
+			EPEL="epel-release"
 			RHEL=10
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:8"* ]]; then
