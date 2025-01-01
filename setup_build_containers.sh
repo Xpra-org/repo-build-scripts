@@ -154,6 +154,7 @@ for DISTRO in $RPM_DISTROS; do
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:10"* ]]; then
 			RHEL=10
+			EPEL="https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm"
 		fi
 		if [ "${RHEL}" != "0" ]; then
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
