@@ -107,7 +107,7 @@ for DISTRO in $DISTROS; do
 			fi
 			variant="$new_variant"
 		done
-		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_ARCH_NAME} ${ARCH} ${DISTRO_NAME,,} rpm/default.list rpm/rpms.txt"
+		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} rpm/distros/${DISTRO_ARCH_NAME}.list rpm/distros/${ARCH}.list rpm/distros/${DISTRO_NAME,,}.list rpm/default.list rpm/rpms.txt"
 		for list_name in ${RPM_LIST_OPTIONS}; do
 			#prefer lists found in rpm/distros/
 			if [ -r "${PACKAGING}/${list_name}" ]; then
