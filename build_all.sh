@@ -98,7 +98,7 @@ for DISTRO in $DISTROS; do
 		variant="${DISTRO_VARIANT,,}"
 		while [ ! -z "$variant" ]; do
 			#ie: CentOS-7.6.1801
-			RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_NAME,,}-${variant}"
+			RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} rpm/distros/${DISTRO_NAME,,}-${variant}.list"
 			#strip everything after the last dot:
 			#ie: '7.6.1801' -> '7.6' -> '7' -> ''
 			new_variant="${variant%.*}"
@@ -107,11 +107,11 @@ for DISTRO in $DISTROS; do
 			fi
 			variant="$new_variant"
 		done
-		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_ARCH_NAME} ${ARCH} ${DISTRO_NAME,,} default"
+		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} ${DISTRO_ARCH_NAME} ${ARCH} ${DISTRO_NAME,,} rpm/default.list rpm/rpms.txt"
 		for list_name in ${RPM_LIST_OPTIONS}; do
 			#prefer lists found in rpm/distros/
-			if [ -r "${PACKAGING}/rpm/distros/${list_name}.list" ]; then
-				rpm_list_path=$(readlink -e "${PACKAGING}/rpm/distros/${list_name}.list")
+			if [ -r "${PACKAGING}/${list_name}" ]; then
+				rpm_list_path=$(readlink -e "${PACKAGING}/${list_name}")
 				echo " using rpm package list from ${rpm_list_path}"
 				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
 				break
