@@ -87,11 +87,7 @@ while read p; do
 	nosrc=`grep -v ".src" "/tmp/${p}.list" > "/tmp/${p}.nosrclist"`
 	MISSING=""
 	while read -r dep; do
-		if [ "$DNF" == "yum" ]; then
-			MATCHES=$(repoquery "$dep" --repoid=repo-local-build 2> /dev/null | wc -l)
-		else
-			MATCHES=$($DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l)
-		fi
+		MATCHES=$($DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l)
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
 		else
