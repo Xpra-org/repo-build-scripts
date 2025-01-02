@@ -33,8 +33,10 @@ mkdir -p "rpmbuild/SOURCES" "rpmbuild/RPMS" "$HOME/rpmbuild/RPMS" "$HOME/rpmbuil
 #specfiles and patches
 cp ./rpm/*spec "rpmbuild/SOURCES/"
 cp ./rpm/*spec "$HOME/rpmbuild/SOURCES/"
-cp ./rpm/patches/* "rpmbuild/SOURCES/"
-cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
+if [ -d "./rpm/patches" ]; then
+	cp ./rpm/patches/* "rpmbuild/SOURCES/"
+	cp ./rpm/patches/* "$HOME/rpmbuild/SOURCES/"
+fi
 #source packages
 cp ./pkgs/* "rpmbuild/SOURCES/"
 cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
