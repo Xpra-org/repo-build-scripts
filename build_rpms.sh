@@ -88,11 +88,19 @@ while read p; do
 	MISSING=""
 	while read -r dep; do
 		MATCHES=$($DNF repoquery "$dep" --repo repo-local-build 2> /dev/null | wc -l)
+		if [ "${MATCHES}" == "0" ]; then
+			# workaround for python3-cairo which is actually named `pycairo`...
+			# try harder to find a match:
+			longpy=`echo "${dep}" | sed "s/^py/${PYTHON3:-python3}-/g"`
+			if [ "${longpy}" != "${dep}" ]; then
+				MATCHES=$($DNF repoquery "$longpy" --repo repo-local-build 2> /dev/null | wc -l)
+			fi
+		fi
 		if [ "${MATCHES}" != "0" ]; then
 			echo " * found   ${dep}"
-		else
-			MISSING="${MISSING} ${dep}"
+			continue
 		fi
+		MISSING="${MISSING} ${dep}"
 	done < "/tmp/${p}.nosrclist"
 	if [ ! -z "${MISSING}" ]; then
 		echo " need to rebuild $p to get:${MISSING}"
