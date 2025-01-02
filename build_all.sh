@@ -107,6 +107,7 @@ for DISTRO in $DISTROS; do
 			fi
 			variant="$new_variant"
 		done
+		rpm_list_path=""
 		RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} rpm/distros/${DISTRO_ARCH_NAME}.list rpm/distros/${ARCH}.list rpm/distros/${DISTRO_NAME,,}.list rpm/default.list rpm/rpms.txt"
 		for list_name in ${RPM_LIST_OPTIONS}; do
 			#prefer lists found in rpm/distros/
@@ -117,6 +118,10 @@ for DISTRO in $DISTROS; do
 				break
 			fi
 		done
+		if [ -z "${rpm_list_path}" ]; then
+			echo "aborted: no rpm package list found from ${RPM_LIST_OPTIONS}"
+			continue
+		fi
 		# the repo file may need updating:
 		buildah copy "$TEMP_IMAGE" ./local-build.repo /etc/yum.repos.d/ || die "failed to copy ./local-build.repo"
 		BUILD_SCRIPT="build_rpms.sh"
