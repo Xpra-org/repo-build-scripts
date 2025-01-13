@@ -68,6 +68,7 @@ while read p; do
 			echo " clearing ${varname}"
 			unset "$varname"
 		else
+			echo
 			echo " declaring ${varname}=${value}"
 			declare -x "$varname=$value"
 		fi
