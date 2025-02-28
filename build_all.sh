@@ -20,15 +20,15 @@ if [ ! -e "${PACKAGING}" ]; then
 fi
 TARGET_REPO_FILE="${PACKAGING}/target-repository"
 if [ ! -e "${TARGET_REPO_FILE}" ]; then
-  echo "${TARGET_REPO_FILE} does not exist!"
-  exit 1
+	echo "${TARGET_REPO_FILE} does not exist!"
+	exit 1
 fi
 TARGET_REPO=`cat ${TARGET_REPO_FILE} | tr -d '\n\r '`
 if [[ $TARGET_REPO = @(beta|stable|lts) ]]; then
-  echo "targeting the ${TARGET_REPO} repository"
+	echo "targeting the ${TARGET_REPO} repository"
 else
-  echo "invalid target repository ${TARGET_REPO}"
-  exit 1
+	echo "invalid target repository ${TARGET_REPO}"
+	exit 1
 fi
 
 DO_DOWNLOAD="${DO_DOWNLOAD:-1}"
@@ -82,7 +82,7 @@ for DISTRO in $DISTROS; do
 	TEMP_IMAGE="$IMAGE_NAME-temp"
 	buildah rm "${TEMP_IMAGE}" >& /dev/null
 	buildah rmi "${TEMP_IMAGE}" >& /dev/null
-	if ! buildah from --arch ${ARCH} --pull-never --name  "$TEMP_IMAGE" "$IMAGE_NAME"; then
+	if ! buildah from --arch ${ARCH} --pull-never --name "$TEMP_IMAGE" "$IMAGE_NAME"; then
 		echo "cannot build $DISTRO : image $IMAGE_NAME is missing or $TEMP_IMAGE already exists?"
 		continue
 	fi
@@ -135,31 +135,42 @@ for DISTRO in $DISTROS; do
 	buildah copy "$TEMP_IMAGE" "./${BUILD_SCRIPT}" "/src/${BUILD_SCRIPT}" || die "failed to copy build script"
 	mkdir -p "$REPO_PATH" >& /dev/null
 
+	PC_FILES=""
+
+	#set to "0" to avoid building the AMF codecs
+	AMD_CODECS="${AMD_CODECS:-1}"
+	if [ "${AMD_CODECS}" == "1" ]; then
+		# amf.pc points to /opt, which we bind mount
+		PC_FILES="${PC_FILES} amf"
+	fi
+
 	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
 	NVIDIA_CODECS="${NVIDIA_CODECS:-1}"
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
-		NVIDIA_PC_FILES=""
+		PC_FILES="${PC_FILES} cuda nvenc nvjpeg"
 		if [ "${ARCH}" == "x86_64" ]; then
-			NVIDIA_PC_FILES="cuda cuda-x86_64 nvenc nvjpeg nvfbc"
+			PC_FILES="${PC_FILES} cuda nvfbc"
 			#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
 			# shellcheck disable=SC2045
 			for lib in $(ls /usr/lib64/libnvidia-fbc.so*); do
 				buildah copy "$TEMP_IMAGE" "$lib" "$LIB/" || die "failed to copy $lib to $LIB"
 			done
 		fi
-		if [ "${ARCH}" == "arm64" ]; then
-			NVIDIA_PC_FILES="cuda cuda-arm64 nvenc nvjpeg"
-		fi
-		for pc_file in ${NVIDIA_PC_FILES}; do
-			#find the file, which may be arch specific:
-			for t in "$pc_file-$ARCH.pc" "$pc_file.pc"; do
-				if [ -r "./pkgconfig/$t" ]; then
-					buildah copy "$TEMP_IMAGE" "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
-					break
-				fi
-			done
-		done
 	fi
+
+	# install pkg-config files:
+  echo "installing pkg-config files: ${PC_FILES}"
+	for pc_file in ${PC_FILES}; do
+		#find the file, which may be arch specific:
+		for t in "$pc_file-$ARCH.pc" "$pc_file.pc"; do
+			if [ -r "./pkgconfig/$t" ]; then
+        echo "* ${t}"
+				buildah copy "$TEMP_IMAGE" "./pkgconfig/$t" "${LIB}/pkgconfig/$pc_file.pc" || die "failed to copy $pc_file.pc"
+				break
+			fi
+		done
+	done
+
 	#manage ./opt/cuda as a symlink to the arch specific version:
 	pushd opt || exit 1
 	if [ -d "cuda-$ARCH" ]; then

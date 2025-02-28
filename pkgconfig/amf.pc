@@ -1,0 +1,8 @@
+# pkg-config file from AMF
+prefix=/opt
+includedir=${prefix}/AMF
+
+Name: amf
+Description: AMF codec implementation
+Version: 1.0
+Cflags: -I${includedir}
