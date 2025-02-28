@@ -19,7 +19,7 @@ function fetch() {
 	VERSION=$(specver $SPECFILE)
 	if [ -z "${VERSION}" ]; then
 		echo "no version found in $SPECNAME"
-		exit 1
+		return
 	fi
 	URLS=`rpmspec -P $SPECFILE | grep "^Source.*:" | awk '{print $2}'`
 	if [ -z "${URLS}" ]; then
