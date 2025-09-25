@@ -177,6 +177,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah config --workingdir /src $IMAGE_NAME
 	buildah run $IMAGE_NAME createrepo "/src/repo/"
 	buildah commit $IMAGE_NAME $IMAGE_NAME
+	buildah rm $IMAGE_NAME
 done
 
 DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:noble Ubuntu:noble:arm64 Ubuntu:oracular Ubuntu:oracular:arm64 Ubuntu:plucky Ubuntu:plucky:arm64 Ubuntu:questing Ubuntu:questing:arm64 Debian:bullseye Debian:bookworm Debian:trixie Debian:trixie:arm64 Debian:trixie:riscv64 Debian:sid Debian:sid:arm64 Debian:sid:riscv64}
@@ -234,4 +235,5 @@ for DISTRO in $DEB_DISTROS; do
 	#DISTRO_NAME=`echo $DISTRO | awk -F: '{print $2}'`
 	#buildah run $IMAGE_NAME bash -c 'echo "deb file:///repo $DISTRO_NAME main" > /etc/apt/sources.list.d/local-build.list'
 	buildah commit $IMAGE_NAME $IMAGE_NAME
+	buildah rm $IMAGE_NAME
 done
