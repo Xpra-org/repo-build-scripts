@@ -24,17 +24,10 @@ for DISTRO in $DISTROS; do
 	echo $DISTRO | grep -Eiv "fedora|centos|rockylinux|oraclelinux|almalinux" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
-		CREATEREPO="createrepo"
-		PM="dnf"
-		echo $DISTRO | grep -Eqi "centos:7|centos-7|centos7"
-		if [ "$?" == "0" ]; then
-			PM="yum"
-		fi
-
 		buildah run $IMAGE_NAME rm -fr "/src/repo/.repodata" "/src/repo/repodata" "/src/repo/x86_64"
 		buildah run $IMAGE_NAME mkdir "/src/repo/x86_64"
-		buildah run $IMAGE_NAME $CREATEREPO "/src/repo/x86_64/"
-		buildah run $IMAGE_NAME $PM update --disablerepo=repo-local-build --disablerepo=repo-local-source -y
+		buildah run $IMAGE_NAME createrepo "/src/repo/x86_64/"
+		buildah run $IMAGE_NAME dnf update --disablerepo=repo-local-build --disablerepo=repo-local-source -y
 	else
 		buildah config --env DEBIAN_FRONTEND=noninteractive $IMAGE_NAME
 		buildah run $IMAGE_NAME apt-get update
