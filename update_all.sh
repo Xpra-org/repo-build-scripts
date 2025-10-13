@@ -21,6 +21,8 @@ for DISTRO in $DISTROS; do
 		continue
 	fi
 	echo $DISTRO : $IMAGE_NAME
+	buildah rm "${IMAGE_NAME}" >& /dev/null
+	buildah from --name "${IMAGE_NAME}" "${IMAGE_NAME}"
 	echo $DISTRO | grep -Eiv "fedora|centos|rockylinux|oraclelinux|almalinux" >& /dev/null
 	RPM="$?"
 	if [ "${RPM}" == "1" ]; then
