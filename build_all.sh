@@ -159,7 +159,7 @@ for DISTRO in $DISTROS; do
 	fi
 
 	# install pkg-config files:
-  echo "installing pkg-config files: ${PC_FILES}"
+	echo "installing pkg-config files: ${PC_FILES}"
 	for pc_file in ${PC_FILES}; do
 		#find the file, which may be arch specific:
 		for t in "$pc_file-$ARCH.pc" "$pc_file.pc"; do
@@ -171,19 +171,23 @@ for DISTRO in $DISTROS; do
 		done
 	done
 
-	#manage ./opt/cuda as a symlink to the arch specific version:
-	pushd opt || exit 1
-	if [ -d "cuda-$ARCH" ]; then
-		rm -f cuda
-		ln -sf cuda-$ARCH cuda
+	#manage ./opt/cuda as a symlink to the arch specific version found in the bind mount /opt/lib:
+	buildah run rm -f /opt/cuda
+	if [ -d "lib/cuda-$ARCH" ]; then
+		buildah run "$TEMP_IMAGE" ln -sf /opt/lib/cuda-$ARCH /opt/cuda
+	else
+		buildah run "$TEMP_IMAGE" ln -sf /opt/lib/cuda /opt/cuda
 	fi
-	popd || exit 1
+	# the other libraries are symlinked to /opt without any arch specific magic:
+	for lib in nvenc Capture_Linux AMF; do
+		buildah run "$TEMP_IMAGE" ln -sf /opt/lib/$lib /opt/$lib
+	done
 
 	buildah commit "$TEMP_IMAGE" "$TEMP_IMAGE" || die "failed to commit $TEMP_IMAGE"
 
 	if [ -n "${RUN_CMD}" ]; then
 		buildah run \
-					--volume "${BUILDAH_DIR}/opt:/opt:ro,z" \
+					--volume "${BUILDAH_DIR}/opt/lib:/opt/lib:ro,z" \
 					--volume "${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z" \
 					--volume "${BUILDAH_DIR}/cache:/var/cache:rw,z" \
 					--volume "${REPO_PATH}:/src/repo:noexec,nodev,z" \
@@ -192,7 +196,7 @@ for DISTRO in $DISTROS; do
 					"$TEMP_IMAGE" "${RUN_CMD}"
 	else
 		buildah run \
-					--volume "${BUILDAH_DIR}/opt:/opt:ro,z" \
+					--volume "${BUILDAH_DIR}/opt/lib:/opt/lib:ro,z" \
 					--volume "${BUILDAH_DIR}/pkgs:/src/pkgs:ro,z" \
 					--volume "${BUILDAH_DIR}/cache:/var/cache:rw,z" \
 					--volume "${REPO_PATH}:/src/repo:noexec,nodev,z" \
