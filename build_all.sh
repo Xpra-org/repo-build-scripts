@@ -13,7 +13,7 @@ cd "${BUILDAH_DIR}" || exit 1
 mkdir cache >& /dev/null
 rm -fr cache/ldconfig cache/libX11 cache/debconf cache/man
 
-PACKAGING="$BUILDAH_DIR/packaging"
+PACKAGING="${PACKAGING:-$BUILDAH_DIR/packaging}"
 if [ ! -e "${PACKAGING}" ]; then
 	echo "${PACKAGING} should point to the repository build definitions"
 	exit 1
