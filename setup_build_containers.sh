@@ -117,6 +117,7 @@ for DISTRO in $RPM_DISTROS; do
 		#with stream8 and stream9,
 		#we have to enable EPEL to get the PowerTools repo:
 		EPEL="epel-release"
+		CRB="crb"
 		RHEL=0
 		if [[ "${DISTRO_LOWER}" == *"stream8"* ]]; then
 			EPEL="epel-next-release"
@@ -141,6 +142,7 @@ for DISTRO in $RPM_DISTROS; do
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:10"* ]]; then
 			EPEL="oracle-epel-release-el10"
+			CRB="ol10_codeready_builder"
 			RHEL=10
 			enable_repo ol10_codeready_builder_developer
 		fi
@@ -168,7 +170,7 @@ for DISTRO in $RPM_DISTROS; do
 			buildah run $IMAGE_NAME dnf install -y $EPEL --disablerepo=repo-local-build --disablerepo=repo-local-source
 		fi
 		if [[ "${RHEL}" -ge "9" ]]; then
-			enable_repo crb
+			enable_repo $CRB
 		fi
 		#CentOS 8 and later:
 		#there is no "rpmspectool" package so we have to use pip to install it:
