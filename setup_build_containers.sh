@@ -140,6 +140,7 @@ for DISTRO in $RPM_DISTROS; do
 			enable_repo ol9_codeready_builder
 		fi
 		if [[ "${DISTRO_LOWER}" == *"oraclelinux:10"* ]]; then
+			EPEL="oracle-epel-release-el10"
 			RHEL=10
 			enable_repo ol10_codeready_builder_developer
 		fi
