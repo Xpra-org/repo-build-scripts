@@ -139,11 +139,18 @@ for DISTRO in $RPM_DISTROS; do
 			RHEL=9
 			enable_repo ol9_codeready_builder
 		fi
+		if [[ "${DISTRO_LOWER}" == *"oraclelinux:10"* ]]; then
+			RHEL=10
+			enable_repo ol10_codeready_builder_developer
+		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:8"* ]]; then
 			RHEL=8
 		fi
 		if [[ "${DISTRO_LOWER}" == *"rockylinux:9"* ]]; then
 			RHEL=9
+		fi
+		if [[ "${DISTRO_LOWER}" == *"rockylinux:10"* ]]; then
+			RHEL=10
 		fi
 		if [[ "${DISTRO_LOWER}" == *"almalinux:8"* ]]; then
 			RHEL=8
