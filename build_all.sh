@@ -193,6 +193,9 @@ for DISTRO in $DISTROS; do
 					--volume "${REPO_PATH}:/src/repo:noexec,nodev,z" \
 					--volume "${PACKAGING}/rpm:/src/rpm:ro,z" \
 					--volume "${PACKAGING}/debian:/src/debian:O" \
+					--memory=10g \
+					--memory-swap=10g \
+					--cpus=4 \
 					"$TEMP_IMAGE" "${RUN_CMD}"
 	else
 		buildah run \
