@@ -38,4 +38,5 @@ for DISTRO in $DISTROS; do
 		buildah run $IMAGE_NAME apt-get autoremove -y
 	fi
 	buildah commit --squash $IMAGE_NAME $IMAGE_NAME
+	buildah rm "${IMAGE_NAME}" >& /dev/null
 done
