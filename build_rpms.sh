@@ -109,7 +109,7 @@ while read p; do
 		echo " need to rebuild $p to get:${MISSING}"
 		date +"%Y-%m-%d %H:%M:%S"
 		echo " - installing build dependencies"
-		if ! $DNF builddep -y ${SPECFILE} > builddep.log; then
+		if ! $DNF builddep --allowerasing --nobest -y ${SPECFILE} > builddep.log; then
 			echo "-------------------------------------------"
 			echo "builddep failed:"
 			cat builddep.log
