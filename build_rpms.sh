@@ -138,7 +138,7 @@ while read p; do
 			fi
 		done
 		echo " - updating local packages"
-		$DNF update -y --disablerepo=* --enablerepo=repo-local-build
+		$DNF update -y --allowerasing --nobest --disablerepo=* --enablerepo=repo-local-build
 	fi
 done <./rpms.list
 date +"%Y-%m-%d %H:%M:%S"
