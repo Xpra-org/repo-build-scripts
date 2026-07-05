@@ -27,7 +27,7 @@ disable_repo() {
 }
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:41 Fedora:41:arm64 Fedora:42 Fedora:42:arm64 Fedora:43 Fedora:43:arm64 Fedora:44 Fedora:44:arm64 almalinux:8.8 almalinux:8.9 almalinux:8.10 rockylinux:8.8 rockylinux:8.9 rockylinux:8.10 oraclelinux:8.8 oraclelinux:8.9 oraclelinux:8.10 CentOS:stream9 CentOS:stream9:arm64 CentOS:stream10-development almalinux:10-kitten almalinux:10.2 almalinux:10.1 almalinux:9.7 almalinux:9.6 almalinux:9.5 almalinux:9.4 almalinux:9.3 almalinux:9.2 rockylinux:10.2 rockylinux:10.1 rockylinux:9.2 rockylinux:9.3 rockylinux:9.4 rockylinux:9.5 oraclelinux:10 oraclelinux:9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:43 Fedora:43:arm64 Fedora:44 Fedora:44:arm64 almalinux:8.9 almalinux:8.10 rockylinux:8.9 rockylinux:8.10 oraclelinux:8.9 oraclelinux:8.10 CentOS:stream9 CentOS:stream9:arm64 CentOS:stream10-development almalinux:10-kitten almalinux:10.2 almalinux:10.1 almalinux:9.7 almalinux:9.6 almalinux:9.5 almalinux:9.4 rockylinux:10.2 rockylinux:10.1 rockylinux:9.4 rockylinux:9.5 rockylinux:9.6 rockylinux:9.7 oraclelinux:10 oraclelinux:9}
 #other distros we can build for:
 # CentOS:stream9
 # CentOS:centos8.3.2011 CentOS:8.4.2105
@@ -190,7 +190,7 @@ for DISTRO in $RPM_DISTROS; do
 	buildah rm $IMAGE_NAME
 done
 
-DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:focal:arm64 Ubuntu:jammy Ubuntu:jammy:arm64 Ubuntu:noble Ubuntu:noble:arm64 Ubuntu:questing Ubuntu:questing:arm64 Ubuntu:resolute Ubuntu:resolute:arm64 Debian:bullseye Debian:bookworm Debian:trixie Debian:trixie:arm64 Debian:trixie:riscv64 Debian:forky Debian:sid Debian:sid:arm64 Debian:sid:riscv64}
+DEB_DISTROS=${DEB_DISTROS:-Ubuntu:bionic Ubuntu:focal Ubuntu:jammy Ubuntu:noble Ubuntu:noble:arm64 Ubuntu:questing Ubuntu:questing:arm64 Ubuntu:resolute Ubuntu:resolute:arm64 Debian:bullseye Debian:bookworm Debian:trixie Debian:trixie:arm64 Debian:trixie:riscv64 Debian:forky Debian:forky:arm64 Debian:forky:riscv64 Debian:sid Debian:sid:arm64 Debian:sid:riscv64}
 for DISTRO in $DEB_DISTROS; do
 	#DISTRO_DIR_NAME="`echo $DISTRO | sed 's/:/-/g'`-repo-build"
 	#mkdir -p packaging/buildah/repo/Fedora/{32,33,34} >& /dev/null
