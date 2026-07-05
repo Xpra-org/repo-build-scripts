@@ -29,12 +29,22 @@ MACOS_ARCHES = ["x86_64", "arm64"]
 MSWINDOWS_ARCHES = ["x86_64", "aarch64"]
 
 # filename patterns for the core "xpra" package only (not subpackages/debuginfo/dbgsym),
-# used to discover which versions have actually been built in a given channel
+# used to discover which versions have actually been built in a given channel.
+# both the regular ("full") and "Light" builds are recognised, since either one
+# is evidence that a given version was released.
 RPM_VER_RE = re.compile(r"^xpra-(\d[\d.]*)-")
 DEB_VER_RE = re.compile(r"^xpra_(\d[\d.]*)(?:-r\d+)?-\d+_")
-MACOS_VER_RE = re.compile(r"^Xpra-(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$")
-MSWIN_VER_RE = re.compile(r"^Xpra-(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$")
+MACOS_VER_RE = re.compile(r"^Xpra-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$")
+MSWIN_VER_RE = re.compile(r"^Xpra-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$")
 VERSION_RES = (RPM_VER_RE, DEB_VER_RE, MACOS_VER_RE, MSWIN_VER_RE)
+
+# Windows and macOS builds come in two flavours, distinguished by filename:
+# the regular ("full") build, and the "Xpra-Light-..." build
+BUILD_VARIANTS = ["full", "light"]
+
+
+def variant_prefix(arch, variant):
+    return "Xpra-Light-%s" % arch if variant == "light" else "Xpra-%s" % arch
 
 
 def natural_key(s):
@@ -72,19 +82,19 @@ def deb_present(channel, codename, arch, version):
     return bool(glob.glob(pattern))
 
 
-def macos_present(channel, arch, version):
+def macos_present(channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "Xpra-%s-%s-r*.pkg" % (arch, version))
+    pattern = os.path.join(arch_dir, "%s-%s-r*.pkg" % (variant_prefix(arch, variant), version))
     return bool(glob.glob(pattern))
 
 
-def mswindows_present(channel, arch, version):
+def mswindows_present(channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
     if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "Xpra-%s_%s-r*.msi" % (arch, version))
+    pattern = os.path.join(arch_dir, "%s_%s-r*.msi" % (variant_prefix(arch, variant), version))
     return bool(glob.glob(pattern))
 
 
@@ -129,8 +139,9 @@ def macos_missing(channel, version):
     for arch in MACOS_ARCHES:
         if not os.path.isdir(os.path.join(REPOS_ROOT, channel, "MacOS", arch)):
             continue
-        if not macos_present(channel, arch, version):
-            missing.append("MacOS/%s" % disp_arch(arch))
+        for variant in BUILD_VARIANTS:
+            if not macos_present(channel, arch, variant, version):
+                missing.append("MacOS/%s/%s" % (variant, disp_arch(arch)))
     return missing
 
 
@@ -140,8 +151,9 @@ def mswindows_missing(channel, version):
         arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
         if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
             continue
-        if not mswindows_present(channel, arch, version):
-            missing.append("MSWindows/%s" % arch)
+        for variant in BUILD_VARIANTS:
+            if not mswindows_present(channel, arch, variant, version):
+                missing.append("MSWindows/%s/%s" % (variant, arch))
     return missing
 
 
@@ -258,7 +270,8 @@ def discover_macos_targets():
         for arch in MACOS_ARCHES:
             arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
             if os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
-                targets.add(("macOS", "-", arch))
+                for variant in BUILD_VARIANTS:
+                    targets.add(("macOS", variant, arch))
     return targets
 
 
@@ -268,7 +281,8 @@ def discover_mswindows_targets():
         for arch in MSWINDOWS_ARCHES:
             arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
             if os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
-                targets.add(("Windows", "-", arch))
+                for variant in BUILD_VARIANTS:
+                    targets.add(("Windows", variant, arch))
     return targets
 
 
@@ -277,7 +291,7 @@ RED = "\U0001F534"
 NA = "⚪"
 
 
-def light(present):
+def status_icon(present):
     if present is None:
         return NA
     return GREEN if present else RED
@@ -301,13 +315,13 @@ def print_table(all_minors=False):
         rows.append((family, codename, disp_arch(arch), cells))
     for distro, variant, arch in discover_macos_targets():
         cells = [
-            macos_present(channel, arch, latest[channel]) if latest[channel] else None
+            macos_present(channel, arch, variant, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
         rows.append((distro, variant, disp_arch(arch), cells))
     for distro, variant, arch in discover_mswindows_targets():
         cells = [
-            mswindows_present(channel, arch, latest[channel]) if latest[channel] else None
+            mswindows_present(channel, arch, variant, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
         rows.append((distro, variant, arch, cells))
@@ -320,7 +334,7 @@ def print_table(all_minors=False):
     print("| " + " | ".join(headers) + " |")
     print("|" + "|".join(["---"] * len(headers)) + "|")
     for distro, variant, arch, cells in rows:
-        cell_str = " | ".join(light(c) for c in cells)
+        cell_str = " | ".join(status_icon(c) for c in cells)
         print("| %s | %s | %s | %s |" % (distro, variant, arch, cell_str))
 
 
