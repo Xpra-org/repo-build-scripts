@@ -1,15 +1,21 @@
 #!/usr/bin/python3
-# list which xpra package builds are missing for a given release,
-# by checking the local mirror of the build output repos.
+# Check which xpra package builds are present/missing in the local mirror
+# of the build output repos (~/projects/repos/{lts,stable,beta}).
 #
-# usage: list-missing <beta|stable|lts> <version>
-# eg:    list-missing lts 5.1.6
+# usage:
+#   list-missing                     generate a markdown status table for
+#                                     all three channels, auto-detecting the
+#                                     latest version available in each
+#   list-missing <channel> <version> list what is missing for one release
+#                                     eg: list-missing lts 5.1.6
 
 import glob
 import os
+import re
 import sys
 
 REPOS_ROOT = os.path.expanduser("~/projects/repos")
+CHANNELS = ["lts", "stable", "beta"]
 
 # kept in sync with repos/bin/update-rpm-repos.sh and repos/bin/update-deb-packages.py
 RPM_DISTROS = ["Fedora", "CentOS", "almalinux", "rockylinux", "oraclelinux"]
@@ -22,6 +28,67 @@ DEB_ARCHES = ["amd64", "arm64", "riscv64"]
 MACOS_ARCHES = ["x86_64", "arm64"]
 MSWINDOWS_ARCHES = ["x86_64", "aarch64"]
 
+# filename patterns for the core "xpra" package only (not subpackages/debuginfo/dbgsym),
+# used to discover which versions have actually been built in a given channel
+RPM_VER_RE = re.compile(r"^xpra-(\d[\d.]*)-")
+DEB_VER_RE = re.compile(r"^xpra_(\d[\d.]*)(?:-r\d+)?-\d+_")
+MACOS_VER_RE = re.compile(r"^Xpra-(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$")
+MSWIN_VER_RE = re.compile(r"^Xpra-(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$")
+VERSION_RES = (RPM_VER_RE, DEB_VER_RE, MACOS_VER_RE, MSWIN_VER_RE)
+
+
+def natural_key(s):
+    return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)]
+
+
+def version_key(v):
+    return tuple(int(p) for p in v.split("."))
+
+
+# debian/macOS use their own arch names on disk; display them using the same
+# names as the rpm/MSWindows side for consistency
+ARCH_DISPLAY = {"arm64": "aarch64", "amd64": "x86_64"}
+
+
+def disp_arch(arch):
+    return ARCH_DISPLAY.get(arch, arch)
+
+
+# ---- presence checks (used by both modes) ----
+
+def rpm_present(channel, distro, variant, arch, version):
+    arch_dir = os.path.join(REPOS_ROOT, channel, distro, variant, arch)
+    if not os.path.isdir(arch_dir):
+        return None
+    pattern = os.path.join(arch_dir, "xpra-%s-*.%s.rpm" % (version, arch))
+    return bool(glob.glob(pattern))
+
+
+def deb_present(channel, codename, arch, version):
+    arch_dir = os.path.join(REPOS_ROOT, channel, codename, "main", "binary-%s" % arch)
+    if not os.path.isdir(arch_dir):
+        return None
+    pattern = os.path.join(arch_dir, "xpra_%s-*_%s.deb" % (version, arch))
+    return bool(glob.glob(pattern))
+
+
+def macos_present(channel, arch, version):
+    arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
+    if not os.path.isdir(arch_dir):
+        return None
+    pattern = os.path.join(arch_dir, "Xpra-%s-%s-r*.pkg" % (arch, version))
+    return bool(glob.glob(pattern))
+
+
+def mswindows_present(channel, arch, version):
+    arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
+    if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
+        return None
+    pattern = os.path.join(arch_dir, "Xpra-%s_%s-r*.msi" % (arch, version))
+    return bool(glob.glob(pattern))
+
+
+# ---- "list what's missing for one release" mode ----
 
 def rpm_missing(channel, version):
     missing = []
@@ -36,12 +103,10 @@ def rpm_missing(channel, version):
             if os.path.islink(release_path) or not os.path.isdir(release_path):
                 continue
             for arch in RPM_ARCHES:
-                arch_dir = os.path.join(release_path, arch)
-                if not os.path.isdir(arch_dir):
+                if not os.path.isdir(os.path.join(release_path, arch)):
                     continue
-                pattern = os.path.join(arch_dir, "xpra-%s-*.%s.rpm" % (version, arch))
-                if not glob.glob(pattern):
-                    missing.append("%s/%s/%s" % (distro, release, arch))
+                if not rpm_present(channel, distro, release, arch, version):
+                    missing.append("%s/%s/%s" % (distro, release, disp_arch(arch)))
     return missing
 
 
@@ -52,24 +117,20 @@ def deb_missing(channel, version):
         if not os.path.isdir(main_dir):
             continue
         for arch in DEB_ARCHES:
-            arch_dir = os.path.join(main_dir, "binary-%s" % arch)
-            if not os.path.isdir(arch_dir):
+            if not os.path.isdir(os.path.join(main_dir, "binary-%s" % arch)):
                 continue
-            pattern = os.path.join(arch_dir, "xpra_%s-*_%s.deb" % (version, arch))
-            if not glob.glob(pattern):
-                missing.append("%s/%s" % (distro, arch))
+            if not deb_present(channel, distro, arch, version):
+                missing.append("%s/%s" % (distro, disp_arch(arch)))
     return missing
 
 
 def macos_missing(channel, version):
     missing = []
     for arch in MACOS_ARCHES:
-        arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
-        if not os.path.isdir(arch_dir):
+        if not os.path.isdir(os.path.join(REPOS_ROOT, channel, "MacOS", arch)):
             continue
-        pattern = os.path.join(arch_dir, "Xpra-%s-%s-r*.pkg" % (arch, version))
-        if not glob.glob(pattern):
-            missing.append("MacOS/%s" % arch)
+        if not macos_present(channel, arch, version):
+            missing.append("MacOS/%s" % disp_arch(arch))
     return missing
 
 
@@ -79,17 +140,12 @@ def mswindows_missing(channel, version):
         arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
         if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
             continue
-        pattern = os.path.join(arch_dir, "Xpra-%s_%s-r*.msi" % (arch, version))
-        if not glob.glob(pattern):
+        if not mswindows_present(channel, arch, version):
             missing.append("MSWindows/%s" % arch)
     return missing
 
 
-def main():
-    if len(sys.argv) != 3:
-        sys.stderr.write("usage: %s <beta|stable|lts> <version>\n" % sys.argv[0])
-        sys.exit(1)
-    channel, version = sys.argv[1], sys.argv[2]
+def report_missing(channel, version):
     channel_dir = os.path.join(REPOS_ROOT, channel)
     if not os.path.isdir(channel_dir):
         sys.stderr.write("channel directory not found: %s\n" % channel_dir)
@@ -111,6 +167,177 @@ def main():
             print("\n%s:" % category)
             for item in items:
                 print("  %s" % item)
+
+
+# ---- "markdown status table, auto-detect latest" mode ----
+
+def scan_versions(channel):
+    versions = set()
+    channel_dir = os.path.join(REPOS_ROOT, channel)
+    for root, dirs, files in os.walk(channel_dir):
+        # don't follow the "8" -> "8.10" / "arm64" -> "aarch64" style symlinks,
+        # they would just duplicate work
+        dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d))]
+        for f in files:
+            for regex in VERSION_RES:
+                m = regex.match(f)
+                if m:
+                    versions.add(m.group(1))
+                    break
+    return versions
+
+
+def latest_version(channel):
+    versions = scan_versions(channel)
+    if not versions:
+        return None
+    return max(versions, key=version_key)
+
+
+MINOR_RELEASE_RE = re.compile(r"^(\d+)\.(\d+)$")
+
+
+def latest_minor_only(targets):
+    # for variants that look like "X.Y" (eg RHEL-style point releases: 8.8, 8.9,
+    # 8.10), only keep the highest Y for a given (distro, X, arch) group.
+    # variants that don't match this shape (eg "43", "stream9", "10-kitten")
+    # are passed through unchanged, since they aren't a run of point releases.
+    best = {}  # (distro, major, arch) -> (minor, variant)
+    passthrough = set()
+    for distro, variant, arch in targets:
+        m = MINOR_RELEASE_RE.match(variant)
+        if not m:
+            passthrough.add((distro, variant, arch))
+            continue
+        major, minor = int(m.group(1)), int(m.group(2))
+        key = (distro, major, arch)
+        if key not in best or minor > best[key][0]:
+            best[key] = (minor, variant)
+    result = passthrough
+    for (distro, _major, arch), (_minor, variant) in best.items():
+        result.add((distro, variant, arch))
+    return result
+
+
+def discover_rpm_targets(all_minors=False):
+    targets = set()
+    for channel in CHANNELS:
+        for distro in RPM_DISTROS:
+            distro_dir = os.path.join(REPOS_ROOT, channel, distro)
+            if not os.path.isdir(distro_dir):
+                continue
+            for release in os.listdir(distro_dir):
+                release_path = os.path.join(distro_dir, release)
+                if os.path.islink(release_path) or not os.path.isdir(release_path):
+                    continue
+                for arch in RPM_ARCHES:
+                    if os.path.isdir(os.path.join(release_path, arch)):
+                        targets.add((distro, release, arch))
+    if not all_minors:
+        targets = latest_minor_only(targets)
+    return targets
+
+
+def discover_deb_targets():
+    targets = set()
+    for channel in CHANNELS:
+        for family, codenames in (("Debian", DEBIAN_DISTROS), ("Ubuntu", UBUNTU_DISTROS)):
+            for codename in codenames:
+                main_dir = os.path.join(REPOS_ROOT, channel, codename, "main")
+                if not os.path.isdir(main_dir):
+                    continue
+                for arch in DEB_ARCHES:
+                    if os.path.isdir(os.path.join(main_dir, "binary-%s" % arch)):
+                        targets.add((family, codename, arch))
+    return targets
+
+
+def discover_macos_targets():
+    targets = set()
+    for channel in CHANNELS:
+        for arch in MACOS_ARCHES:
+            arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
+            if os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
+                targets.add(("macOS", "-", arch))
+    return targets
+
+
+def discover_mswindows_targets():
+    targets = set()
+    for channel in CHANNELS:
+        for arch in MSWINDOWS_ARCHES:
+            arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
+            if os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
+                targets.add(("Windows", "-", arch))
+    return targets
+
+
+GREEN = "\U0001F7E2"
+RED = "\U0001F534"
+NA = "⚪"
+
+
+def light(present):
+    if present is None:
+        return NA
+    return GREEN if present else RED
+
+
+def print_table(all_minors=False):
+    latest = {channel: latest_version(channel) for channel in CHANNELS}
+
+    rows = []
+    for distro, variant, arch in discover_rpm_targets(all_minors=all_minors):
+        cells = [
+            rpm_present(channel, distro, variant, arch, latest[channel]) if latest[channel] else None
+            for channel in CHANNELS
+        ]
+        rows.append((distro, variant, arch, cells))
+    for family, codename, arch in discover_deb_targets():
+        cells = [
+            deb_present(channel, codename, arch, latest[channel]) if latest[channel] else None
+            for channel in CHANNELS
+        ]
+        rows.append((family, codename, disp_arch(arch), cells))
+    for distro, variant, arch in discover_macos_targets():
+        cells = [
+            macos_present(channel, arch, latest[channel]) if latest[channel] else None
+            for channel in CHANNELS
+        ]
+        rows.append((distro, variant, disp_arch(arch), cells))
+    for distro, variant, arch in discover_mswindows_targets():
+        cells = [
+            mswindows_present(channel, arch, latest[channel]) if latest[channel] else None
+            for channel in CHANNELS
+        ]
+        rows.append((distro, variant, arch, cells))
+
+    rows.sort(key=lambda r: (r[0], natural_key(r[1]), r[2]))
+
+    headers = ["distro", "variant", "arch"] + [
+        "%s (%s)" % (channel, latest[channel] or "?") for channel in CHANNELS
+    ]
+    print("| " + " | ".join(headers) + " |")
+    print("|" + "|".join(["---"] * len(headers)) + "|")
+    for distro, variant, arch, cells in rows:
+        cell_str = " | ".join(light(c) for c in cells)
+        print("| %s | %s | %s | %s |" % (distro, variant, arch, cell_str))
+
+
+def main():
+    args = sys.argv[1:]
+    all_minors = "--all-minors" in args
+    if all_minors:
+        args = [a for a in args if a != "--all-minors"]
+
+    if len(args) == 0:
+        print_table(all_minors=all_minors)
+    elif len(args) == 2:
+        report_missing(args[0], args[1])
+    else:
+        sys.stderr.write("usage: %s [--all-minors]              (markdown status table)\n" % sys.argv[0])
+        sys.stderr.write("       %s <beta|stable|lts> <version>\n" % sys.argv[0])
+        sys.exit(1)
 
 
 if __name__ == "__main__":
