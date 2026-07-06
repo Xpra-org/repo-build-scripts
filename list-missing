@@ -3,9 +3,14 @@
 # of the build output repos (~/projects/repos/{lts,stable,beta}).
 #
 # usage:
-#   list-missing                     generate a markdown status table for
+#   list-missing [--all-minors] [--links]
+#                                     generate a markdown status table for
 #                                     all three channels, auto-detecting the
-#                                     latest version available in each
+#                                     latest version available in each.
+#                                     --all-minors lists every point release
+#                                     instead of just the latest one per major.
+#                                     --links turns each status icon into a
+#                                     link to its download directory.
 #   list-missing <channel> <version> list what is missing for one release
 #                                     eg: list-missing lts 5.1.6
 
@@ -290,6 +295,8 @@ GREEN = "\U0001F7E2"
 RED = "\U0001F534"
 NA = "⚪"
 
+BASE_URL = "https://xpra.org"
+
 
 def status_icon(present):
     if present is None:
@@ -297,34 +304,46 @@ def status_icon(present):
     return GREEN if present else RED
 
 
-def print_table(all_minors=False):
+def cell_markup(present, channel, path_parts, links):
+    icon = status_icon(present)
+    if not links or present is None:
+        return icon
+    url = "%s/%s/%s/" % (BASE_URL, channel, "/".join(path_parts))
+    return "[%s](%s)" % (icon, url)
+
+
+def print_table(all_minors=False, links=False):
     latest = {channel: latest_version(channel) for channel in CHANNELS}
 
+    # rows: (distro, variant, display_arch, path_parts, cells)
+    # path_parts is the on-disk path (relative to the channel dir) that was
+    # checked, reused to build the download directory URL when --links is set
     rows = []
     for distro, variant, arch in discover_rpm_targets(all_minors=all_minors):
         cells = [
             rpm_present(channel, distro, variant, arch, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
-        rows.append((distro, variant, arch, cells))
+        rows.append((distro, variant, arch, [distro, variant, arch], cells))
     for family, codename, arch in discover_deb_targets():
         cells = [
             deb_present(channel, codename, arch, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
-        rows.append((family, codename, disp_arch(arch), cells))
+        path_parts = [codename, "main", "binary-%s" % arch]
+        rows.append((family, codename, disp_arch(arch), path_parts, cells))
     for distro, variant, arch in discover_macos_targets():
         cells = [
             macos_present(channel, arch, variant, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
-        rows.append((distro, variant, disp_arch(arch), cells))
+        rows.append((distro, variant, disp_arch(arch), ["MacOS", arch], cells))
     for distro, variant, arch in discover_mswindows_targets():
         cells = [
             mswindows_present(channel, arch, variant, latest[channel]) if latest[channel] else None
             for channel in CHANNELS
         ]
-        rows.append((distro, variant, arch, cells))
+        rows.append((distro, variant, arch, ["MSWindows", arch], cells))
 
     rows.sort(key=lambda r: (r[0], natural_key(r[1]), r[2]))
 
@@ -333,23 +352,25 @@ def print_table(all_minors=False):
     ]
     print("| " + " | ".join(headers) + " |")
     print("|" + "|".join(["---"] * len(headers)) + "|")
-    for distro, variant, arch, cells in rows:
-        cell_str = " | ".join(status_icon(c) for c in cells)
+    for distro, variant, arch, path_parts, cells in rows:
+        cell_str = " | ".join(
+            cell_markup(c, channel, path_parts, links) for channel, c in zip(CHANNELS, cells)
+        )
         print("| %s | %s | %s | %s |" % (distro, variant, arch, cell_str))
 
 
 def main():
     args = sys.argv[1:]
     all_minors = "--all-minors" in args
-    if all_minors:
-        args = [a for a in args if a != "--all-minors"]
+    links = "--links" in args
+    args = [a for a in args if a not in ("--all-minors", "--links")]
 
     if len(args) == 0:
-        print_table(all_minors=all_minors)
+        print_table(all_minors=all_minors, links=links)
     elif len(args) == 2:
         report_missing(args[0], args[1])
     else:
-        sys.stderr.write("usage: %s [--all-minors]              (markdown status table)\n" % sys.argv[0])
+        sys.stderr.write("usage: %s [--all-minors] [--links]    (markdown status table)\n" % sys.argv[0])
         sys.stderr.write("       %s <beta|stable|lts> <version>\n" % sys.argv[0])
         sys.exit(1)
 
