@@ -98,7 +98,9 @@ for DISTRO in $DISTROS; do
 		variant="${DISTRO_VARIANT,,}"
 		while [ ! -z "$variant" ]; do
 			#ie: CentOS-7.6.1801
-			RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} rpm/distros/${DISTRO_NAME,,}-${variant}.list"
+			#prefer a list specific to this variant+arch combination
+			#(ie: centos-stream9-arm64.list) over the plain variant one:
+			RPM_LIST_OPTIONS="${RPM_LIST_OPTIONS} rpm/distros/${DISTRO_NAME,,}-${variant}-${ARCH,,}.list rpm/distros/${DISTRO_NAME,,}-${variant}.list"
 			#strip everything after the last dot:
 			#ie: '7.6.1801' -> '7.6' -> '7' -> ''
 			new_variant="${variant%.*}"
