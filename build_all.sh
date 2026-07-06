@@ -173,7 +173,7 @@ for DISTRO in $DISTROS; do
 
 	#manage ./opt/cuda as a symlink to the arch specific version found in the bind mount /opt/lib:
 	buildah run rm -f /opt/cuda
-	if [ -d "lib/cuda-$ARCH" ]; then
+	if [ -d "opt/lib/cuda-$ARCH" ]; then
 		buildah run "$TEMP_IMAGE" ln -sf /opt/lib/cuda-$ARCH /opt/cuda
 	else
 		buildah run "$TEMP_IMAGE" ln -sf /opt/lib/cuda /opt/cuda
