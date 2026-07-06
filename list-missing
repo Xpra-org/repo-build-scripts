@@ -207,14 +207,25 @@ def cell_markup(present, channel, path_parts, links):
     icon = status_icon(present)
     if not links or present is None:
         return icon
+    return dir_link(icon, channel, path_parts)
+
+
+def dir_link(text, channel, path_parts):
     url = "%s/%s/%s/" % (BASE_URL, channel, "/".join(path_parts))
-    return "[%s](%s)" % (icon, url)
+    return "[%s](%s)" % (text, url)
+
+
+def label_markup(text, channel, path_parts, links):
+    if not links or not path_parts:
+        return text
+    return dir_link(text, channel, path_parts)
 
 
 def print_table(channel, all_minors=False, links=False):
     version = latest_version(channel)
 
-    # table_rows: (distro, variant, {canonical_arch: (present, path_parts)})
+    # table_rows: (distro, distro_path_parts, variant, variant_path_parts,
+    #              {canonical_arch: (present, path_parts)})
     table_rows = []
 
     for distro, variant in discover_rpm_rows(channel, all_minors):
@@ -222,42 +233,46 @@ def print_table(channel, all_minors=False, links=False):
         for arch, disk_arch in RPM_ARCH_MAP.items():
             present = rpm_present(channel, distro, variant, disk_arch, version) if version and disk_arch else None
             arch_cells[arch] = (present, [distro, variant, disk_arch])
-        table_rows.append((distro, variant, arch_cells))
+        table_rows.append((distro, [distro], variant, [distro, variant], arch_cells))
 
     for family, codename in discover_deb_rows(channel):
         arch_cells = {}
         for arch, disk_arch in DEB_ARCH_MAP.items():
             present = deb_present(channel, codename, disk_arch, version) if version and disk_arch else None
             arch_cells[arch] = (present, [codename, "main", "binary-%s" % disk_arch])
-        table_rows.append((family, codename, arch_cells))
+        # "Debian"/"Ubuntu" is just our own grouping label, not a real directory
+        table_rows.append((family, None, codename, [codename], arch_cells))
 
     for distro, variant in discover_macos_rows(channel):
         arch_cells = {}
         for arch, disk_arch in MACOS_ARCH_MAP.items():
             present = macos_present(channel, disk_arch, variant, version) if version and disk_arch else None
             arch_cells[arch] = (present, ["MacOS", disk_arch] if disk_arch else None)
-        table_rows.append((distro, variant, arch_cells))
+        # "full"/"light" share the same directory, there is no variant-specific path
+        table_rows.append((distro, ["MacOS"], variant, None, arch_cells))
 
     for distro, variant in discover_mswindows_rows(channel):
         arch_cells = {}
         for arch, disk_arch in MSWINDOWS_ARCH_MAP.items():
             present = mswindows_present(channel, disk_arch, variant, version) if version and disk_arch else None
             arch_cells[arch] = (present, ["MSWindows", disk_arch] if disk_arch else None)
-        table_rows.append((distro, variant, arch_cells))
+        table_rows.append((distro, ["MSWindows"], variant, None, arch_cells))
 
-    table_rows.sort(key=lambda r: (r[0], natural_key(r[1])))
+    table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
     print("%s: %s" % (channel, version or "no version found"))
     print()
     headers = ["distro", "variant"] + ARCHES
     print("| " + " | ".join(headers) + " |")
     print("|" + "|".join(["---"] * len(headers)) + "|")
-    for distro, variant, arch_cells in table_rows:
+    for distro, distro_path, variant, variant_path, arch_cells in table_rows:
         cells = []
         for arch in ARCHES:
             present, path_parts = arch_cells[arch]
             cells.append(cell_markup(present, channel, path_parts, links) if path_parts else NA)
-        print("| %s | %s | %s |" % (distro, variant, " | ".join(cells)))
+        distro_cell = label_markup(distro, channel, distro_path, links)
+        variant_cell = label_markup(variant, channel, variant_path, links)
+        print("| %s | %s | %s |" % (distro_cell, variant_cell, " | ".join(cells)))
 
 
 def main():
