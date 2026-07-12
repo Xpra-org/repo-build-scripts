@@ -116,7 +116,8 @@ for DISTRO in $DISTROS; do
 			if [ -r "${PACKAGING}/${list_name}" ]; then
 				rpm_list_path=$(readlink -e "${PACKAGING}/${list_name}")
 				echo " using rpm package list from ${rpm_list_path}"
-				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/rpms.list" || die "failed to copy rpms.list list"
+				buildah copy "$TEMP_IMAGE" "${rpm_list_path}" "/src/" || die "failed to copy ${rpm_list_path}"
+				buildah run "$TEMP_IMAGE" ln -sf "/src/${list_name}" "/src/rpms.list" || die "failed to symlink rpms.list"
 				break
 			fi
 		done

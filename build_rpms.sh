@@ -42,6 +42,7 @@ cp ./pkgs/* "rpmbuild/SOURCES/"
 cp ./pkgs/* "$HOME/rpmbuild/SOURCES/"
 
 echo "Package list:"
+ls -la ./rpms.list
 cat ./rpms.list
 echo
 
