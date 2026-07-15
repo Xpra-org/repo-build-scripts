@@ -180,6 +180,11 @@ for DISTRO in $RPM_DISTROS; do
 		enable_repo PowerTools
 		enable_repo powertools
 	fi
+	if [ "${DISTRO_LOWER}" == "fedora:44:arm64" ]; then
+		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
+		buildah run $IMAGE_NAME dnf install -y bsdtar --disablerepo=repo-local-build --disablerepo=repo-local-source
+		buildah run $IMAGE_NAME ln -s /usr/bin/bsdtar /usr/bin/tar
+	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run dnf clean all
 
@@ -236,6 +241,11 @@ for DISTRO in $DEB_DISTROS; do
 	fi
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
+	if [ "${DISTRO_LOWER}" == "ubuntu:resolute:arm64" ]; then
+		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
+		buildah run $IMAGE_NAME apt-get install -y libarchive-tools
+		buildah run $IMAGE_NAME ln -s /usr/bin/bsdtar /usr/bin/tar
+	fi
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	for x in `ls apt/*`; do
