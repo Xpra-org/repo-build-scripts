@@ -224,17 +224,37 @@ def icon_markup(present, channel, path_parts, links):
     return dir_link(icon, channel, path_parts)
 
 
+def cell_collapsed(entries):
+    # when none of the releases covered by a cell apply to this arch, a single
+    # "not applicable" icon says so just as well as a row of them
+    return all(present is None for _label, present, _path_parts in entries)
+
+
 def cell_markup(entries, channel, links):
     # `entries` is a list of (label, present, path_parts), one per release covered
     # by this row: labels are only used when there is more than one release to
-    # tell apart (eg: "8.10 🟢 8.9 🔴"). when none of the releases apply to this
-    # arch, a single "not applicable" icon says so just as well as a row of them.
-    if all(present is None for _label, present, _path_parts in entries):
+    # tell apart (eg: "8.10 🟢 8.9 🔴").
+    if cell_collapsed(entries):
         return NA
     return " ".join(
         " ".join(x for x in (label, icon_markup(present, channel, path_parts, links)) if x)
         for label, present, path_parts in entries
     )
+
+
+def count_icons(table_rows):
+    # tally the icons as they are actually shown in the table, so that a cell
+    # collapsed down to a single "not applicable" icon only counts once
+    counts = {RED: 0, GREEN: 0, NA: 0}
+    for _distro, _distro_path, _variant, _variant_path, arch_cells in table_rows:
+        for arch in ARCHES:
+            entries = arch_cells[arch]
+            if cell_collapsed(entries):
+                counts[NA] += 1
+                continue
+            for _label, present, _path_parts in entries:
+                counts[status_icon(present)] += 1
+    return counts
 
 
 def dir_link(text, channel, path_parts):
@@ -292,7 +312,9 @@ def print_table(channel, all_minors=False, links=False):
 
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
+    counts = count_icons(table_rows)
     print("%s: %s" % (channel, version or "no version found"))
+    print(", ".join("%s %i" % (icon, counts[icon]) for icon in (RED, GREEN, NA)))
     print()
     headers = ["distro", "variant"] + ARCHES
     print("| " + " | ".join(headers) + " |")
