@@ -4,10 +4,13 @@
 # status table for one channel. The version checked is auto-detected as the
 # latest version found in that channel's mirror.
 #
+# RHEL clones keep every point release around, so those are shown as a single
+# "8.x" row with one labelled icon per point release (eg: 8.10 🟢 8.9 🔴 8.8 🔴).
+#
 # usage:
 #   list-missing <beta|stable|lts> [--all-minors] [--links]
-#     --all-minors  list every point release instead of just the latest one
-#                   per major version (eg: rockylinux 8.8, 8.9, 8.10, ...)
+#     --all-minors  give each point release a row of its own, instead of
+#                   grouping them into a single "8.x" row
 #     --links       turn each status icon into a link to its download
 #                   directory on xpra.org
 #
@@ -24,6 +27,9 @@ ARCHES = ["x86_64", "aarch64", "riscv64"]
 
 # kept in sync with repos/bin/update-rpm-repos.sh and repos/bin/update-deb-packages.py
 RPM_DISTROS = ["Fedora", "CentOS", "almalinux", "rockylinux", "oraclelinux"]
+# the RHEL clones ship a repository per point release, which we keep building for:
+# their point releases are grouped into a single "8.x" row
+RHEL_CLONES = ["almalinux", "rockylinux", "oraclelinux"]
 # canonical arch -> on-disk arch name, or None if that combination doesn't exist
 RPM_ARCH_MAP = {"x86_64": "x86_64", "aarch64": "aarch64", "riscv64": "riscv64"}
 
@@ -129,29 +135,29 @@ def latest_version(channel):
 
 # ---- row discovery (distro/variant only, arch becomes a column) ----
 
-def latest_minor_only(rows):
-    # for variants that look like "X.Y" (eg RHEL-style point releases: 8.8, 8.9,
-    # 8.10), only keep the highest Y for a given (distro, X) group. variants
-    # that don't match this shape (eg "43", "stream9", "10-kitten") are passed
-    # through unchanged, since they aren't a run of point releases.
-    best = {}  # (distro, major) -> (minor, variant)
-    passthrough = set()
-    for distro, variant in rows:
-        m = MINOR_RELEASE_RE.match(variant)
-        if not m:
-            passthrough.add((distro, variant))
+def group_point_releases(rows):
+    # for RHEL clones, gather the "X.Y" point releases (8.8, 8.9, 8.10) of a
+    # given major version into a single "8.x" row listing them all, newest
+    # first. releases that don't have this shape (eg: "43", "stream9",
+    # "10-kitten", or oraclelinux's plain "9") are passed through unchanged,
+    # since they aren't a run of point releases.
+    groups = {}  # (distro, major) -> [release, ...]
+    result = []
+    for distro, release in rows:
+        m = MINOR_RELEASE_RE.match(release)
+        if distro not in RHEL_CLONES or not m:
+            result.append((distro, release, [release], False))
             continue
-        major, minor = int(m.group(1)), int(m.group(2))
-        key = (distro, major)
-        if key not in best or minor > best[key][0]:
-            best[key] = (minor, variant)
-    result = passthrough
-    for (distro, _major), (_minor, variant) in best.items():
-        result.add((distro, variant))
+        groups.setdefault((distro, int(m.group(1))), []).append(release)
+    for (distro, major), releases in groups.items():
+        releases.sort(key=version_key, reverse=True)
+        result.append((distro, "%i.x" % major, releases, True))
     return result
 
 
 def discover_rpm_rows(channel, all_minors):
+    # returns (distro, variant, [release, ...], grouped) tuples: `variant` is the
+    # label shown in the table and `releases` the on-disk directories it covers
     rows = set()
     for distro in RPM_DISTROS:
         distro_dir = os.path.join(REPOS_ROOT, channel, distro)
@@ -164,9 +170,17 @@ def discover_rpm_rows(channel, all_minors):
             if os.path.islink(release_path) or not os.path.isdir(release_path):
                 continue
             rows.add((distro, release))
-    if not all_minors:
-        rows = latest_minor_only(rows)
-    return rows
+    if all_minors:
+        return [(distro, release, [release], False) for distro, release in rows]
+    return group_point_releases(rows)
+
+
+def major_path(channel, distro, variant):
+    # the "8" -> "8.10" symlink a grouped "8.x" row can point at
+    major = variant[:-len(".x")]
+    if os.path.exists(os.path.join(REPOS_ROOT, channel, distro, major)):
+        return [distro, major]
+    return None
 
 
 def discover_deb_rows(channel):
@@ -203,11 +217,24 @@ def status_icon(present):
     return GREEN if present else RED
 
 
-def cell_markup(present, channel, path_parts, links):
+def icon_markup(present, channel, path_parts, links):
     icon = status_icon(present)
-    if not links or present is None:
+    if not links or present is None or not path_parts:
         return icon
     return dir_link(icon, channel, path_parts)
+
+
+def cell_markup(entries, channel, links):
+    # `entries` is a list of (label, present, path_parts), one per release covered
+    # by this row: labels are only used when there is more than one release to
+    # tell apart (eg: "8.10 🟢 8.9 🔴"). when none of the releases apply to this
+    # arch, a single "not applicable" icon says so just as well as a row of them.
+    if all(present is None for _label, present, _path_parts in entries):
+        return NA
+    return " ".join(
+        " ".join(x for x in (label, icon_markup(present, channel, path_parts, links)) if x)
+        for label, present, path_parts in entries
+    )
 
 
 def dir_link(text, channel, path_parts):
@@ -225,21 +252,26 @@ def print_table(channel, all_minors=False, links=False):
     version = latest_version(channel)
 
     # table_rows: (distro, distro_path_parts, variant, variant_path_parts,
-    #              {canonical_arch: (present, path_parts)})
+    #              {canonical_arch: [(label, present, path_parts), ...]})
     table_rows = []
 
-    for distro, variant in discover_rpm_rows(channel, all_minors):
+    for distro, variant, releases, grouped in discover_rpm_rows(channel, all_minors):
         arch_cells = {}
         for arch, disk_arch in RPM_ARCH_MAP.items():
-            present = rpm_present(channel, distro, variant, disk_arch, version) if version and disk_arch else None
-            arch_cells[arch] = (present, [distro, variant, disk_arch])
-        table_rows.append((distro, [distro], variant, [distro, variant], arch_cells))
+            entries = []
+            for release in releases:
+                present = rpm_present(channel, distro, release, disk_arch, version) if version and disk_arch else None
+                # only a grouped "8.x" row needs its icons labelled with the release
+                entries.append((release if grouped else "", present, [distro, release, disk_arch]))
+            arch_cells[arch] = entries
+        variant_path = major_path(channel, distro, variant) if grouped else [distro, variant]
+        table_rows.append((distro, [distro], variant, variant_path, arch_cells))
 
     for family, codename in discover_deb_rows(channel):
         arch_cells = {}
         for arch, disk_arch in DEB_ARCH_MAP.items():
             present = deb_present(channel, codename, disk_arch, version) if version and disk_arch else None
-            arch_cells[arch] = (present, [codename, "main", "binary-%s" % disk_arch])
+            arch_cells[arch] = [("", present, [codename, "main", "binary-%s" % disk_arch])]
         # "Debian"/"Ubuntu" is just our own grouping label, not a real directory
         table_rows.append((family, None, codename, [codename], arch_cells))
 
@@ -247,7 +279,7 @@ def print_table(channel, all_minors=False, links=False):
         arch_cells = {}
         for arch, disk_arch in MACOS_ARCH_MAP.items():
             present = macos_present(channel, disk_arch, variant, version) if version and disk_arch else None
-            arch_cells[arch] = (present, ["MacOS", disk_arch] if disk_arch else None)
+            arch_cells[arch] = [("", present, ["MacOS", disk_arch] if disk_arch else None)]
         # "full"/"light" share the same directory, there is no variant-specific path
         table_rows.append((distro, ["MacOS"], variant, None, arch_cells))
 
@@ -255,7 +287,7 @@ def print_table(channel, all_minors=False, links=False):
         arch_cells = {}
         for arch, disk_arch in MSWINDOWS_ARCH_MAP.items():
             present = mswindows_present(channel, disk_arch, variant, version) if version and disk_arch else None
-            arch_cells[arch] = (present, ["MSWindows", disk_arch] if disk_arch else None)
+            arch_cells[arch] = [("", present, ["MSWindows", disk_arch] if disk_arch else None)]
         table_rows.append((distro, ["MSWindows"], variant, None, arch_cells))
 
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
@@ -266,10 +298,7 @@ def print_table(channel, all_minors=False, links=False):
     print("| " + " | ".join(headers) + " |")
     print("|" + "|".join(["---"] * len(headers)) + "|")
     for distro, distro_path, variant, variant_path, arch_cells in table_rows:
-        cells = []
-        for arch in ARCHES:
-            present, path_parts = arch_cells[arch]
-            cells.append(cell_markup(present, channel, path_parts, links) if path_parts else NA)
+        cells = [cell_markup(arch_cells[arch], channel, links) for arch in ARCHES]
         distro_cell = label_markup(distro, channel, distro_path, links)
         variant_cell = label_markup(variant, channel, variant_path, links)
         print("| %s | %s | %s |" % (distro_cell, variant_cell, " | ".join(cells)))
