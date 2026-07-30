@@ -13,6 +13,13 @@ For example:
 git clone https://github.com/Xpra-org/xpra
 ln -sf xpra/packaging .
 ```
+
+Alternatively, set `PACKAGING` to use a packaging directory in another location:
+
+```shell
+PACKAGING=/path/to/xpra/packaging ./build_all.sh
+```
+
 Build all the packages:
 
 ```shell
