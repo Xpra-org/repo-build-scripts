@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-# Show which xpra package builds are present in the local mirror of the
-# build output repos (~/projects/repos/{lts,stable,beta}), as a markdown
-# status table for one channel. The version checked is auto-detected as the
-# latest version found in that channel's mirror.
+# Show which package builds are present in the local mirror of the build output
+# repos (~/projects/repos/{lts,stable,beta}), as a markdown status table for one
+# channel - one table per project (xpra, go-xpra and rust-xpra), separated by
+# horizontal rules. The version checked is auto-detected separately for each
+# project, as the latest version of it found in that channel's mirror.
 #
 # RHEL clones keep every point release around, so those are shown as a single
 # "8.x" row with one labelled icon per point release (eg: 8.10 🟢 8.9 🔴 8.8 🔴).
@@ -20,10 +21,24 @@ import glob
 import os
 import re
 import sys
+from collections import namedtuple
 
 REPOS_ROOT = os.path.expanduser("~/projects/repos")
 CHANNELS = ["lts", "stable", "beta"]
 ARCHES = ["x86_64", "aarch64", "riscv64"]
+
+# the projects built into these repos: `name` is also the rpm and deb package
+# name, `installer` the prefix of the macOS and Windows installer filenames and
+# `variants` the build flavours to show - only the main xpra build comes in a
+# "Light" flavour, the others just have the regular ("full") build.
+# only xpra has shipped macOS and Windows installers so far, so "Go-Xpra" and
+# "Rust-Xpra" are the names those installers are expected to use.
+Project = namedtuple("Project", "name installer variants")
+PROJECTS = [
+    Project("xpra", "Xpra", ["full", "light"]),
+    Project("go-xpra", "Go-Xpra", ["full"]),
+    Project("rust-xpra", "Rust-Xpra", ["full"]),
+]
 
 # kept in sync with repos/bin/update-rpm-repos.sh and repos/bin/update-deb-packages.py
 RPM_DISTROS = ["Fedora", "CentOS", "almalinux", "rockylinux", "oraclelinux"]
@@ -40,21 +55,12 @@ DEB_ARCH_MAP = {"x86_64": "amd64", "aarch64": "arm64", "riscv64": "riscv64"}
 MACOS_ARCH_MAP = {"x86_64": "x86_64", "aarch64": "arm64", "riscv64": None}
 MSWINDOWS_ARCH_MAP = {"x86_64": "x86_64", "aarch64": "aarch64", "riscv64": None}
 
-# Windows and macOS builds come in two flavours, distinguished by filename:
-# the regular ("full") build, and the "Xpra-Light-..." build
-BUILD_VARIANTS = ["full", "light"]
-
-# filename patterns for the core "xpra" package only (not subpackages/debuginfo/dbgsym),
-# used to discover which versions have actually been built in a given channel.
-# both the regular ("full") and "Light" builds are recognised, since either one
-# is evidence that a given version was released.
-RPM_VER_RE = re.compile(r"^xpra-(\d[\d.]*)-")
-DEB_VER_RE = re.compile(r"^xpra_(\d[\d.]*)(?:-r\d+)?-\d+_")
-MACOS_VER_RE = re.compile(r"^Xpra-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$")
-MSWIN_VER_RE = re.compile(r"^Xpra-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$")
-VERSION_RES = (RPM_VER_RE, DEB_VER_RE, MACOS_VER_RE, MSWIN_VER_RE)
-
 MINOR_RELEASE_RE = re.compile(r"^(\d+)\.(\d+)$")
+
+# glob matching any version at all, used for projects which have no builds in
+# this channel: like the patterns below, it stays anchored on a digit so that
+# subpackages (eg: "xpra-audio-...") are still not mistaken for the core package
+ANY_VERSION = "[0-9]*"
 
 GREEN = "\U0001F7E2"
 RED = "\U0001F534"
@@ -70,67 +76,98 @@ def version_key(v):
     return tuple(int(p) for p in v.split("."))
 
 
-def variant_prefix(arch, variant):
-    return "Xpra-Light-%s" % arch if variant == "light" else "Xpra-%s" % arch
+def variant_prefix(project, arch, variant):
+    if variant == "light":
+        return "%s-Light-%s" % (project.installer, arch)
+    return "%s-%s" % (project.installer, arch)
 
 
 # ---- presence checks, keyed by the on-disk arch name ----
 
-def rpm_present(channel, distro, variant, arch, version):
+def rpm_present(project, channel, distro, variant, arch, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, distro, variant, arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "xpra-%s-*.%s.rpm" % (version, arch))
+    pattern = os.path.join(arch_dir, "%s-%s-*.%s.rpm" % (project.name, version, arch))
     return bool(glob.glob(pattern))
 
 
-def deb_present(channel, codename, arch, version):
+def deb_present(project, channel, codename, arch, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, codename, "main", "binary-%s" % arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "xpra_%s-*_%s.deb" % (version, arch))
+    pattern = os.path.join(arch_dir, "%s_%s-*_%s.deb" % (project.name, version, arch))
     return bool(glob.glob(pattern))
 
 
-def macos_present(channel, arch, variant, version):
+def macos_present(project, channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s-%s-r*.pkg" % (variant_prefix(arch, variant), version))
+    pattern = os.path.join(arch_dir, "%s-%s-r*.pkg" % (variant_prefix(project, arch, variant), version))
     return bool(glob.glob(pattern))
 
 
-def mswindows_present(channel, arch, variant, version):
+def mswindows_present(project, channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
     if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s_%s-r*.msi" % (variant_prefix(arch, variant), version))
+    pattern = os.path.join(arch_dir, "%s_%s-r*.msi" % (variant_prefix(project, arch, variant), version))
     return bool(glob.glob(pattern))
 
 
 # ---- version auto-detection ----
 
+def version_regexes(project):
+    # filename patterns for the core package of this project only (not
+    # subpackages / debuginfo / dbgsym), used to discover which versions have
+    # actually been built in a given channel. both the regular ("full") and
+    # "Light" builds are recognised, since either one is evidence that a given
+    # version was released.
+    pkg = re.escape(project.name)
+    installer = re.escape(project.installer)
+    return (
+        re.compile(r"^%s-(\d[\d.]*)-" % pkg),
+        re.compile(r"^%s_(\d[\d.]*)(?:-r\d+)?-\d+_" % pkg),
+        re.compile(r"^%s-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$" % installer),
+        re.compile(r"^%s-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$" % installer),
+    )
+
+
+def file_version(regexes, filename):
+    for regex in regexes:
+        m = regex.match(filename)
+        if m:
+            return m.group(1)
+    return None
+
+
 def scan_versions(channel):
-    versions = set()
+    # walk the channel's mirror just once, matching every project as we go:
+    # returns the set of versions found for each project name
+    versions = {project.name: set() for project in PROJECTS}
+    project_regexes = [(project.name, version_regexes(project)) for project in PROJECTS]
     channel_dir = os.path.join(REPOS_ROOT, channel)
     for root, dirs, files in os.walk(channel_dir):
         # don't follow the "8" -> "8.10" / "arm64" -> "aarch64" style symlinks,
         # they would just duplicate work
         dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d))]
         for f in files:
-            for regex in VERSION_RES:
-                m = regex.match(f)
-                if m:
-                    versions.add(m.group(1))
+            for name, regexes in project_regexes:
+                version = file_version(regexes, f)
+                if version:
+                    versions[name].add(version)
                     break
     return versions
 
 
-def latest_version(channel):
-    versions = scan_versions(channel)
-    if not versions:
-        return None
-    return max(versions, key=version_key)
+def latest_versions(channel):
+    # the latest version of each project found in this channel,
+    # or None for projects which have no builds here at all
+    return dict(
+        (name, max(versions, key=version_key) if versions else None)
+        for name, versions in scan_versions(channel).items()
+    )
 
 
 # ---- row discovery (distro/variant only, arch becomes a column) ----
@@ -192,21 +229,21 @@ def discover_deb_rows(channel):
     return rows
 
 
-def discover_macos_rows(channel):
+def discover_macos_rows(project, channel):
     rows = set()
     for arch in MACOS_ARCH_MAP.values():
         if arch and os.path.isdir(os.path.join(REPOS_ROOT, channel, "MacOS", arch)):
-            for variant in BUILD_VARIANTS:
+            for variant in project.variants:
                 rows.add(("macOS", variant))
     return rows
 
 
-def discover_mswindows_rows(channel):
+def discover_mswindows_rows(project, channel):
     rows = set()
     for arch in MSWINDOWS_ARCH_MAP.values():
         arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch) if arch else None
         if arch_dir and os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
-            for variant in BUILD_VARIANTS:
+            for variant in project.variants:
                 rows.add(("Windows", variant))
     return rows
 
@@ -268,8 +305,10 @@ def label_markup(text, channel, path_parts, links):
     return dir_link(text, channel, path_parts)
 
 
-def print_table(channel, all_minors=False, links=False):
-    version = latest_version(channel)
+def print_table(project, channel, version, all_minors=False, links=False):
+    # projects which have no builds at all in this channel have no version to
+    # check for, so every build they could have is simply shown as missing
+    version_glob = version or ANY_VERSION
 
     # table_rows: (distro, distro_path_parts, variant, variant_path_parts,
     #              {canonical_arch: [(label, present, path_parts), ...]})
@@ -280,7 +319,7 @@ def print_table(channel, all_minors=False, links=False):
         for arch, disk_arch in RPM_ARCH_MAP.items():
             entries = []
             for release in releases:
-                present = rpm_present(channel, distro, release, disk_arch, version) if version and disk_arch else None
+                present = rpm_present(project, channel, distro, release, disk_arch, version_glob) if disk_arch else None
                 # only a grouped "8.x" row needs its icons labelled with the release
                 entries.append((release if grouped else "", present, [distro, release, disk_arch]))
             arch_cells[arch] = entries
@@ -290,29 +329,31 @@ def print_table(channel, all_minors=False, links=False):
     for family, codename in discover_deb_rows(channel):
         arch_cells = {}
         for arch, disk_arch in DEB_ARCH_MAP.items():
-            present = deb_present(channel, codename, disk_arch, version) if version and disk_arch else None
+            present = deb_present(project, channel, codename, disk_arch, version_glob) if disk_arch else None
             arch_cells[arch] = [("", present, [codename, "main", "binary-%s" % disk_arch])]
         # "Debian"/"Ubuntu" is just our own grouping label, not a real directory
         table_rows.append((family, None, codename, [codename], arch_cells))
 
-    for distro, variant in discover_macos_rows(channel):
+    for distro, variant in discover_macos_rows(project, channel):
         arch_cells = {}
         for arch, disk_arch in MACOS_ARCH_MAP.items():
-            present = macos_present(channel, disk_arch, variant, version) if version and disk_arch else None
+            present = macos_present(project, channel, disk_arch, variant, version_glob) if disk_arch else None
             arch_cells[arch] = [("", present, ["MacOS", disk_arch] if disk_arch else None)]
         # "full"/"light" share the same directory, there is no variant-specific path
         table_rows.append((distro, ["MacOS"], variant, None, arch_cells))
 
-    for distro, variant in discover_mswindows_rows(channel):
+    for distro, variant in discover_mswindows_rows(project, channel):
         arch_cells = {}
         for arch, disk_arch in MSWINDOWS_ARCH_MAP.items():
-            present = mswindows_present(channel, disk_arch, variant, version) if version and disk_arch else None
+            present = mswindows_present(project, channel, disk_arch, variant, version_glob) if disk_arch else None
             arch_cells[arch] = [("", present, ["MSWindows", disk_arch] if disk_arch else None)]
         table_rows.append((distro, ["MSWindows"], variant, None, arch_cells))
 
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
     counts = count_icons(table_rows)
+    print("## %s" % project.name)
+    print()
     print("%s: %s" % (channel, version or "no version found"))
     print(", ".join("%s %i" % (icon, counts[icon]) for icon in (RED, GREEN, NA)))
     print()
@@ -336,7 +377,15 @@ def main():
         sys.stderr.write("usage: %s <beta|stable|lts> [--all-minors] [--links]\n" % sys.argv[0])
         sys.exit(1)
 
-    print_table(args[0], all_minors=all_minors, links=links)
+    channel = args[0]
+    versions = latest_versions(channel)
+    for i, project in enumerate(PROJECTS):
+        if i:
+            # markdown horizontal rule separating each project's table
+            print()
+            print("---")
+            print()
+        print_table(project, channel, versions[project.name], all_minors=all_minors, links=links)
 
 
 if __name__ == "__main__":
