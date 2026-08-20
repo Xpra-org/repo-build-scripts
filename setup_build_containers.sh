@@ -181,9 +181,12 @@ for DISTRO in $RPM_DISTROS; do
 		enable_repo powertools
 	fi
 	if [ "${DISTRO_LOWER}" == "fedora:44:arm64" ]; then
-		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
+		#qemu doesn't implement `openat2`, which newer versions of GNU tar use - see #15
+		#so replace GNU tar with bsdtar, but only *after* bsdtar is installed:
+		#the package manager needs a working `tar` to unpack packages
 		buildah run $IMAGE_NAME dnf install -y bsdtar --disablerepo=repo-local-build --disablerepo=repo-local-source
-		buildah run $IMAGE_NAME ln -s /usr/bin/bsdtar /usr/bin/tar
+		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
+		buildah run $IMAGE_NAME ln -sf /usr/bin/bsdtar /usr/bin/tar
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run dnf clean all
@@ -242,9 +245,14 @@ for DISTRO in $DEB_DISTROS; do
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
 	if [ "${DISTRO_LOWER}" == "ubuntu:resolute:arm64" ]; then
-		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
+		#qemu doesn't implement `openat2`, which newer versions of GNU tar use - see #15
+		#so replace GNU tar with bsdtar, but only *after* bsdtar is installed:
+		#dpkg refuses to run without a working `tar` in the PATH, so moving it away first
+		#makes it impossible to install anything at all
 		buildah run $IMAGE_NAME apt-get install -y libarchive-tools
-		buildah run $IMAGE_NAME ln -s /usr/bin/bsdtar /usr/bin/tar
+		#use a diversion so that upgrading the `tar` package won't silently restore GNU tar:
+		buildah run $IMAGE_NAME dpkg-divert --local --rename --divert /usr/bin/tar.gnu --add /usr/bin/tar
+		buildah run $IMAGE_NAME ln -sf /usr/bin/bsdtar /usr/bin/tar
 	fi
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
