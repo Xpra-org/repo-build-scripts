@@ -247,13 +247,10 @@ for DISTRO in $DEB_DISTROS; do
 	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
 	if [ "${DISTRO_LOWER}" == "ubuntu:resolute:arm64" ]; then
 		#same `openat2` problem as fedora:44:arm64 above (see #15), but here we can't
-		#just replace /usr/bin/tar with bsdtar: the dpkg tooling calls tar with GNU-only
+		#replace /usr/bin/tar with bsdtar: the dpkg tooling calls tar with GNU-only
 		#options ("tar: Option --warning=no-timestamp is not supported")
-		#so install a shim in /usr/local/bin (which comes first in the PATH) which only
-		#uses bsdtar for the plain extractions done by the package build scripts:
+		#so we just make bsdtar available and the package build scripts use it directly:
 		buildah run $IMAGE_NAME apt-get install -y libarchive-tools
-		buildah copy $IMAGE_NAME bin/tar /usr/local/bin/tar
-		buildah run $IMAGE_NAME chmod 755 /usr/local/bin/tar
 	fi
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
