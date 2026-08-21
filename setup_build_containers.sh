@@ -27,7 +27,7 @@ disable_repo() {
 }
 
 #arm64 builds require qemu-aarch64-static
-RPM_DISTROS=${RPM_DISTROS:-Fedora:43 Fedora:43:arm64 Fedora:44 Fedora:44:arm64 almalinux:8.9 almalinux:8.10 rockylinux:8.9 rockylinux:8.10 oraclelinux:8.9 oraclelinux:8.10 CentOS:stream9 CentOS:stream9:arm64 CentOS:stream10-development almalinux:10-kitten almalinux:10.2 almalinux:10.1 almalinux:9.7 almalinux:9.6 almalinux:9.5 almalinux:9.4 rockylinux:10.2 rockylinux:10.1 rockylinux:9.4 rockylinux:9.5 rockylinux:9.6 rockylinux:9.7 oraclelinux:10 oraclelinux:9}
+RPM_DISTROS=${RPM_DISTROS:-Fedora:43 Fedora:43:arm64 Fedora:44 Fedora:44:arm64 Fedora:45 almalinux:8.9 almalinux:8.10 rockylinux:8.9 rockylinux:8.10 oraclelinux:8.9 oraclelinux:8.10 CentOS:stream9 CentOS:stream9:arm64 CentOS:stream10-development almalinux:10-kitten almalinux:10.2 almalinux:10.1 almalinux:9.7 almalinux:9.6 almalinux:9.5 almalinux:9.4 rockylinux:10.2 rockylinux:10.1 rockylinux:9.4 rockylinux:9.5 rockylinux:9.6 rockylinux:9.7 oraclelinux:10 oraclelinux:9}
 #other distros we can build for:
 # CentOS:stream9
 # CentOS:centos8.3.2011 CentOS:8.4.2105
