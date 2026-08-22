@@ -1,7 +1,9 @@
 #!/bin/bash
 
 date +"%Y-%m-%d %H:%M:%S"
-if dnf-3 --version >& /dev/null; then
+#Fedora 45 moved the distro repository definitions to `/usr/share/dnf5/repos.d/`,
+#which dnf4 (`dnf-3`) does not read - it would not find any packages at all:
+if dnf-3 --version >& /dev/null && [ ! -d "/usr/share/dnf5/repos.d" ]; then
 	DNF="${DNF:-dnf-3}"
 else
 	DNF="${DNF:-dnf}"

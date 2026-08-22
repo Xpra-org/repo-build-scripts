@@ -15,15 +15,18 @@ pushd ${BUILDAH_DIR}
 # `buildah run $IMAGE_NAME dnf config-manager --set-disabled $repo`
 # and the recommended alternative is not backwards compatible!
 # (why oh why all this unnecessary breakage)
+# and on Fedora 45, dnf4 can no longer see the distro repositories at all
+# (they moved to `/usr/share/dnf5/repos.d/`), so fall back to dnf5's `setopt`
+# (which EL8 and EL9 do not have, hence trying `dnf-3` first)
 enable_repo() {
 	repo=$1
 	# repofile="/etc/yum.repos.d/${repo}.repo"
 	# buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=1/g' ${repofile} || true"
-	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-enabled ${repo}"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-enabled ${repo} || dnf config-manager setopt ${repo}.enabled=1"
 }
 disable_repo() {
 	repo=$1
-	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-disabled ${repo}"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-disabled ${repo} || dnf config-manager setopt ${repo}.enabled=0"
 }
 
 #arm64 builds require qemu-aarch64-static
