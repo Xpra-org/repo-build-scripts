@@ -87,9 +87,13 @@ for DISTRO in $RPM_DISTROS; do
 		#some repositories are enabled by default,
 		#but we don't want to use them
 		#(any repository failures would cause problems)
-		for repo in fedora-modular updates-modular updates-testing-modular updates-testing-modular-debuginfo updates-testing-modular-source; do
-			disable_repo $repo
-		done
+		#the modular repositories are gone from Fedora 45 onwards
+		#(and `rawhide` has no version number, so it is skipped too)
+		if [ -n "${DISTRO_MAJOR_NO}" ] && [ "${DISTRO_MAJOR_NO}" -lt 45 ]; then
+			for repo in fedora-modular updates-modular updates-testing-modular updates-testing-modular-debuginfo updates-testing-modular-source; do
+				disable_repo $repo
+			done
+		fi
 		#enable openh264:
 		enable_repo fedora-cisco-openh264
 		#add rpmfusion:
