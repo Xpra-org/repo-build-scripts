@@ -49,7 +49,7 @@ RHEL_CLONES = ["almalinux", "rockylinux", "oraclelinux"]
 RPM_ARCH_MAP = {"x86_64": "x86_64", "aarch64": "aarch64", "riscv64": "riscv64"}
 
 DEBIAN_DISTROS = "bullseye,bookworm,trixie,forky,sid".split(",")
-UBUNTU_DISTROS = "jammy,noble,resolute".split(",")
+UBUNTU_DISTROS = "jammy,noble,resolute,stonking".split(",")
 DEB_ARCH_MAP = {"x86_64": "amd64", "aarch64": "arm64", "riscv64": "riscv64"}
 
 MACOS_ARCH_MAP = {"x86_64": "x86_64", "aarch64": "arm64", "riscv64": None}
