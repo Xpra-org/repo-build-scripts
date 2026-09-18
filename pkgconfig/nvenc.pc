@@ -1,9 +1,13 @@
 prefix=/opt/nvenc
+exec_prefix=${prefix}
 includedir=${prefix}/Interface
-libdir=${prefix}/Lib/linux/stubs/x86_64/
+libdir=/usr/lib64/nvidia
+
 
 Name: nvenc
 Description: NVENC
-Version: 12
-Libs: -L${libdir}
-Cflags: -I${includedir} -Wno-error=deprecated-declarations
+Version: 10
+Requires:
+Conflicts:
+Libs: -L${libdir} -lnvidia-encode
+Cflags: -I${includedir}

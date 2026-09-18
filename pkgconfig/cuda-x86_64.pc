@@ -4,7 +4,6 @@ includedir=${cudaroot}/targets/x86_64-linux/include
 
 Name: cuda
 Description: CUDA Driver Library
-Version: 13.3
+Version: 11.7
 Libs: -L${libdir} -lcuda
-#for GCC versions 8.0 and older, add: "-Wno-error=sign-compare"
-Cflags: -I${includedir} -Wno-error=deprecated-declarations
+Cflags: -I${includedir}
