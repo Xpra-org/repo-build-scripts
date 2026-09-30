@@ -187,15 +187,6 @@ for DISTRO in $RPM_DISTROS; do
 		enable_repo PowerTools
 		enable_repo powertools
 	fi
-	if [ "${DISTRO_LOWER}" == "fedora:44:arm64" ]; then
-		#older qemu-user doesn't implement `openat2`, which newer versions of GNU tar
-		#use for extraction - see #15 (the real fix is qemu 9.2 or later on the host)
-		#so replace GNU tar with bsdtar, but only *after* bsdtar is installed:
-		#the package manager needs a working `tar` to unpack packages
-		buildah run $IMAGE_NAME dnf install -y bsdtar --disablerepo=repo-local-build --disablerepo=repo-local-source
-		buildah run $IMAGE_NAME mv /usr/bin/tar /usr/bin/tar.gnu
-		buildah run $IMAGE_NAME ln -sf /usr/bin/bsdtar /usr/bin/tar
-	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run dnf clean all
 
@@ -252,13 +243,6 @@ for DISTRO in $DEB_DISTROS; do
 	fi
 	buildah run $IMAGE_NAME apt-get update
 	buildah run $IMAGE_NAME apt-get remove -y unattended-upgrades
-	if [ "${DISTRO_LOWER}" == "ubuntu:resolute:arm64" ]; then
-		#same `openat2` problem as fedora:44:arm64 above (see #15), but here we can't
-		#replace /usr/bin/tar with bsdtar: the dpkg tooling calls tar with GNU-only
-		#options ("tar: Option --warning=no-timestamp is not supported")
-		#so we just make bsdtar available and the package build scripts use it directly:
-		buildah run $IMAGE_NAME apt-get install -y libarchive-tools
-	fi
 	buildah run $IMAGE_NAME mkdir -p "/src/repo/" "/src/rpm" "/src/debian" "/src/pkgs"
 	buildah config --workingdir /src $IMAGE_NAME
 	for x in `ls apt/*`; do
