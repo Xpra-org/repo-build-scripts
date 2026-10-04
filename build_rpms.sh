@@ -8,7 +8,7 @@ if dnf-3 --version >& /dev/null && [ ! -d "/usr/share/dnf5/repos.d" ]; then
 else
 	DNF="${DNF:-dnf}"
 fi
-if ! createrepo_c --version >& /dev/null; then
+if createrepo_c --version >& /dev/null; then
 	CREATEREPO="${CREATEREPO:-createrepo_c}"
 else
 	CREATEREPO="${CREATEREPO:-createrepo}"
