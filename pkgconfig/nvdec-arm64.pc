@@ -1,0 +1,13 @@
+prefix=/opt/nvenc
+exec_prefix=${prefix}
+includedir=${prefix}/Interface
+libdir=${prefix}/Lib/linux/stubs/aarch64/
+
+
+Name: nvdec
+Description: NVDEC
+Version: 13
+Requires:
+Conflicts:
+Libs: -L${libdir} -lnvcuvid
+Cflags: -I${includedir} -Wno-deprecated-declarations

@@ -154,7 +154,7 @@ for DISTRO in $DISTROS; do
 	#set to "0" to avoid building the NVIDIA proprietary codecs NVENC, NVFBC and NVJPEG
 	NVIDIA_CODECS="${NVIDIA_CODECS:-1}"
 	if [ "${NVIDIA_CODECS}" == "1" ]; then
-		PC_FILES="${PC_FILES} cuda nvenc nvjpeg"
+		PC_FILES="${PC_FILES} cuda nvenc nvdec nvjpeg"
 		if [ "${ARCH}" == "x86_64" ]; then
 			PC_FILES="${PC_FILES} cuda nvfbc"
 			#libnvidia-fbc.so.* must be placed in the lib path specified in nvfbc.pc
