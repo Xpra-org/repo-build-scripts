@@ -1,13 +1,13 @@
 prefix=/opt/nvenc
 exec_prefix=${prefix}
 includedir=${prefix}/Interface
-libdir=/usr/lib64/nvidia
+libdir=${prefix}/Lib/linux/stubs/x86_64/
 
 
 Name: nvenc
 Description: NVENC
-Version: 10
+Version: 13
 Requires:
 Conflicts:
-Libs: -L${libdir} -lnvidia-encode
+Libs: -L${libdir}
 Cflags: -I${includedir}

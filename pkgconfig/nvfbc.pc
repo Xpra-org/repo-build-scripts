@@ -5,8 +5,8 @@ libdir=/usr/lib64
 
 Name: nvfbc
 Description: NVFBC
-Version: 6.0
+Version: 9.0
 Requires:
 Conflicts:
-Libs: -L${libdir}
-Cflags: -I${includedir} -lnvidia-fbc
+Libs: -L${libdir} -lnvidia-fbc
+Cflags: -I${includedir}
