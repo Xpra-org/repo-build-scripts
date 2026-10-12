@@ -33,9 +33,11 @@ ARCHES = ["x86_64", "aarch64", "riscv64"]
 # "Light" flavour, the others just have the regular ("full") build.
 # only xpra has shipped macOS and Windows installers so far, so "Go-Xpra" and
 # "Rust-Xpra" are the names those installers are expected to use.
+# xpra-html5 has no installers at all, so its `installer` is None.
 Project = namedtuple("Project", "name installer variants")
 PROJECTS = [
     Project("xpra", "Xpra", ["full", "light"]),
+    Project("xpra-html5", None, ["full"]),
     Project("go-xpra", "Go-Xpra", ["full"]),
     Project("rust-xpra", "Rust-Xpra", ["full"]),
 ]
@@ -88,16 +90,23 @@ def rpm_present(project, channel, distro, variant, arch, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, distro, variant, arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s-%s-*.%s.rpm" % (project.name, version, arch))
-    return bool(glob.glob(pattern))
+    # arch-independent packages (eg: xpra-html5) are built as "noarch"
+    return any(
+        glob.glob(os.path.join(arch_dir, "%s-%s-*.%s.rpm" % (project.name, version, rpm_arch)))
+        for rpm_arch in (arch, "noarch")
+    )
 
 
 def deb_present(project, channel, codename, arch, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, codename, "main", "binary-%s" % arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s_%s-*_%s.deb" % (project.name, version, arch))
-    return bool(glob.glob(pattern))
+    # xpra-html5 debs don't use the standard naming: "xpra-html5-21-r1-1.deb"
+    patterns = (
+        "%s_%s-*_%s.deb" % (project.name, version, arch),
+        "%s-%s-*.deb" % (project.name, version),
+    )
+    return any(glob.glob(os.path.join(arch_dir, pattern)) for pattern in patterns)
 
 
 def macos_present(project, channel, arch, variant, version):
@@ -125,10 +134,14 @@ def version_regexes(project):
     # "Light" builds are recognised, since either one is evidence that a given
     # version was released.
     pkg = re.escape(project.name)
-    installer = re.escape(project.installer)
-    return (
+    regexes = (
         re.compile(r"^%s-(\d[\d.]*)-" % pkg),
         re.compile(r"^%s_(\d[\d.]*)(?:-r\d+)?-\d+_" % pkg),
+    )
+    if not project.installer:
+        return regexes
+    installer = re.escape(project.installer)
+    return regexes + (
         re.compile(r"^%s-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$" % installer),
         re.compile(r"^%s-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$" % installer),
     )
@@ -231,6 +244,8 @@ def discover_deb_rows(channel):
 
 def discover_macos_rows(project, channel):
     rows = set()
+    if not project.installer:
+        return rows
     for arch in MACOS_ARCH_MAP.values():
         if arch and os.path.isdir(os.path.join(REPOS_ROOT, channel, "MacOS", arch)):
             for variant in project.variants:
@@ -240,6 +255,8 @@ def discover_macos_rows(project, channel):
 
 def discover_mswindows_rows(project, channel):
     rows = set()
+    if not project.installer:
+        return rows
     for arch in MSWINDOWS_ARCH_MAP.values():
         arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch) if arch else None
         if arch_dir and os.path.isdir(arch_dir) and not os.path.islink(arch_dir):
