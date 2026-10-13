@@ -27,17 +27,21 @@ REPOS_ROOT = os.path.expanduser("~/projects/repos")
 CHANNELS = ["lts", "stable", "beta"]
 ARCHES = ["x86_64", "aarch64", "riscv64"]
 
-# the projects built into these repos: `name` is also the rpm and deb package
+# the projects built into these repos: `name` is also the rpm (and usually deb) package
 # name, `installer` the prefix of the macOS and Windows installer filenames and
 # `variants` the build flavours to show - only the main xpra build comes in a
 # "Light" flavour, the others just have the regular ("full") build.
 # only xpra has shipped macOS and Windows installers so far, so "Go-Xpra" and
 # "Rust-Xpra" are the names those installers are expected to use.
-# xpra-html5 has no installers at all, so its `installer` is None.
-Project = namedtuple("Project", "name installer variants")
+# xpra-html5 and the dummy driver have no installers at all, so their
+# `installer` is None.
+# `deb_name` is the name used by the deb packages, when it differs from the
+# rpm one: the dummy driver is "xserver-xorg-video-dummy" on Debian and Ubuntu.
+Project = namedtuple("Project", "name installer variants deb_name", defaults=(None,))
 PROJECTS = [
     Project("xpra", "Xpra", ["full", "light"]),
-    Project("xpra-html5", None, ["full"]),
+    Project("xorg-x11-drv-dummy", None, ["full"], "xserver-xorg-video-dummy"),
+    Project("xpra-html5", "Xpra HTML5", ["full"]),
     Project("go-xpra", "Go-Xpra", ["full"]),
     Project("rust-xpra", "Rust-Xpra", ["full"]),
 ]
@@ -78,6 +82,10 @@ def version_key(v):
     return tuple(int(p) for p in v.split("."))
 
 
+def deb_name(project):
+    return project.deb_name or project.name
+
+
 def variant_prefix(project, arch, variant):
     if variant == "light":
         return "%s-Light-%s" % (project.installer, arch)
@@ -101,10 +109,11 @@ def deb_present(project, channel, codename, arch, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, codename, "main", "binary-%s" % arch)
     if not os.path.isdir(arch_dir):
         return None
+    name = deb_name(project)
     # xpra-html5 debs don't use the standard naming: "xpra-html5-21-r1-1.deb"
     patterns = (
-        "%s_%s-*_%s.deb" % (project.name, version, arch),
-        "%s-%s-*.deb" % (project.name, version),
+        "%s_%s-*_%s.deb" % (name, version, arch),
+        "%s-%s-*.deb" % (name, version),
     )
     return any(glob.glob(os.path.join(arch_dir, pattern)) for pattern in patterns)
 
@@ -134,9 +143,11 @@ def version_regexes(project):
     # "Light" builds are recognised, since either one is evidence that a given
     # version was released.
     pkg = re.escape(project.name)
+    deb_pkg = re.escape(deb_name(project))
     regexes = (
         re.compile(r"^%s-(\d[\d.]*)-" % pkg),
-        re.compile(r"^%s_(\d[\d.]*)(?:-r\d+)?-\d+_" % pkg),
+        re.compile(r"^%s-(\d[\d.]*)-" % deb_pkg),
+        re.compile(r"^%s_(\d[\d.]*)(?:-r\d+)?-\d+_" % deb_pkg),
     )
     if not project.installer:
         return regexes
