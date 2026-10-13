@@ -41,7 +41,7 @@ Project = namedtuple("Project", "name installer variants deb_name", defaults=(No
 PROJECTS = [
     Project("xpra", "Xpra", ["full", "light"]),
     Project("xorg-x11-drv-dummy", None, ["full"], "xserver-xorg-video-dummy"),
-    Project("xpra-html5", "Xpra HTML5", ["full"]),
+    Project("xpra-html5", None, ["full"]),
     Project("go-xpra", "Go-Xpra", ["full"]),
     Project("rust-xpra", "Rust-Xpra", ["full"]),
 ]
