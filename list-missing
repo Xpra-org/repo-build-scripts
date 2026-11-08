@@ -6,7 +6,7 @@
 # project, as the latest version of it found in that channel's mirror.
 #
 # RHEL clones keep every point release around, so those are shown as a single
-# "8.x" row with one labelled icon per point release (eg: 8.10 🟢 8.9 🔴 8.8 🔴).
+# "8.x" row with one labelled icon per point release (eg: 🟢 8.10, 🔴 8.9, 🔴 8.8 - one per line).
 #
 # usage:
 #   list-missing <beta|stable|lts> [--all-minors] [--links]
@@ -298,11 +298,12 @@ def cell_collapsed(entries):
 def cell_markup(entries, channel, links):
     # `entries` is a list of (label, present, path_parts), one per release covered
     # by this row: labels are only used when there is more than one release to
-    # tell apart (eg: "8.10 🟢 8.9 🔴").
+    # tell apart (eg: "🟢 8.10<br>🔴 8.9"), one per line so the icon always
+    # stays next to its own label.
     if cell_collapsed(entries):
         return NA
-    return " ".join(
-        " ".join(x for x in (label, icon_markup(present, channel, path_parts, links)) if x)
+    return "<br>".join(
+        " ".join(x for x in (icon_markup(present, channel, path_parts, links), label) if x)
         for label, present, path_parts in entries
     )
 
