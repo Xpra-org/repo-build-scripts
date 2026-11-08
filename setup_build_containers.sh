@@ -17,16 +17,17 @@ pushd ${BUILDAH_DIR}
 # (why oh why all this unnecessary breakage)
 # and on Fedora 45, dnf4 can no longer see the distro repositories at all
 # (they moved to `/usr/share/dnf5/repos.d/`), so fall back to dnf5's `setopt`
-# (which EL8 and EL9 do not have, hence trying `dnf-3` first)
+# (which EL8 and EL9 do not have, hence trying `dnf-3` first,
+# and calling `dnf5` explicitly since `dnf` is still dnf4 there)
 enable_repo() {
 	repo=$1
 	# repofile="/etc/yum.repos.d/${repo}.repo"
 	# buildah run $IMAGE_NAME bash -c "[ -r $repofile ] && sed -E -i 's/enabled=.?/enabled=1/g' ${repofile} || true"
-	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-enabled ${repo} || dnf config-manager setopt ${repo}.enabled=1"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-enabled ${repo} || dnf5 config-manager setopt ${repo}.enabled=1"
 }
 disable_repo() {
 	repo=$1
-	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-disabled ${repo} || dnf config-manager setopt ${repo}.enabled=0"
+	buildah run $IMAGE_NAME bash -c "dnf-3 config-manager --set-disabled ${repo} || dnf5 config-manager setopt ${repo}.enabled=0"
 }
 
 #arm64 builds require qemu-aarch64-static
@@ -183,9 +184,12 @@ for DISTRO in $RPM_DISTROS; do
 		#there is no "rpmspectool" package so we have to use pip to install it:
 		buildah run $IMAGE_NAME dnf install -y python3-pip --disablerepo=repo-local-build --disablerepo=repo-local-source
 		buildah run $IMAGE_NAME pip3 install python-rpm-spec
-		#try different spellings because they've made it case sensitive and renamed the repo..
-		enable_repo PowerTools
-		enable_repo powertools
+		if [[ "${RHEL}" == "8" ]]; then
+			#EL9 onwards uses "crb" instead (enabled above)
+			#try different spellings because they've made it case sensitive and renamed the repo..
+			enable_repo PowerTools
+			enable_repo powertools
+		fi
 	fi
 	buildah run $IMAGE_NAME rpmdev-setuptree
 	#buildah run dnf clean all
