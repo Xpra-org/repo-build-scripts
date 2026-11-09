@@ -17,6 +17,7 @@
 #
 # eg: list-missing lts
 
+import fnmatch
 import glob
 import os
 import re
@@ -118,20 +119,34 @@ def deb_present(project, channel, codename, arch, version):
     return any(glob.glob(os.path.join(arch_dir, pattern)) for pattern in patterns)
 
 
+def dir_has_match(dirname, patterns):
+    # case-insensitive glob matching of the filenames in `dirname`:
+    # installer names aren't consistently capitalized (eg: "Xpra-..." vs "go-xpra-...")
+    patterns = [pattern.lower() for pattern in patterns]
+    return any(
+        fnmatch.fnmatchcase(f.lower(), pattern)
+        for f in os.listdir(dirname)
+        for pattern in patterns
+    )
+
+
 def macos_present(project, channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MacOS", arch)
     if not os.path.isdir(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s-%s-r*.pkg" % (variant_prefix(project, arch, variant), version))
-    return bool(glob.glob(pattern))
+    return dir_has_match(arch_dir, ["%s-%s-r*.pkg" % (variant_prefix(project, arch, variant), version)])
 
 
 def mswindows_present(project, channel, arch, variant, version):
     arch_dir = os.path.join(REPOS_ROOT, channel, "MSWindows", arch)
     if not os.path.isdir(arch_dir) or os.path.islink(arch_dir):
         return None
-    pattern = os.path.join(arch_dir, "%s_%s-r*.msi" % (variant_prefix(project, arch, variant), version))
-    return bool(glob.glob(pattern))
+    patterns = ["%s_%s-r*.msi" % (variant_prefix(project, arch, variant), version)]
+    if variant == "full":
+        # some projects (eg: go-xpra) ship a plain "go-xpra-0.4.0-r1.exe",
+        # with the arch only given by the directory it is in
+        patterns.append("%s-%s-r*.exe" % (project.installer, version))
+    return dir_has_match(arch_dir, patterns)
 
 
 # ---- version auto-detection ----
@@ -153,8 +168,9 @@ def version_regexes(project):
         return regexes
     installer = re.escape(project.installer)
     return regexes + (
-        re.compile(r"^%s-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$" % installer),
-        re.compile(r"^%s-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$" % installer),
+        re.compile(r"^%s-(?:Light-)?(?:x86_64|arm64)-(\d[\d.]*)-r\d+\.pkg$" % installer, re.IGNORECASE),
+        re.compile(r"^%s-(?:Light-)?(?:x86_64|aarch64)_(\d[\d.]*)-r\d+\.msi$" % installer, re.IGNORECASE),
+        re.compile(r"^%s-(\d[\d.]*)-r\d+\.exe$" % installer, re.IGNORECASE),
     )
 
 
