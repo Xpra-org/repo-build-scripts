@@ -339,8 +339,25 @@ def count_icons(table_rows):
     return counts
 
 
+def package_anchor(name, variant="full"):
+    # the section of a download page for this package or installer:
+    # "#xpra", "#xpra-light", "#go-xpra", etc - only "Light" builds have a suffix
+    if variant == "light":
+        return "#%s-light" % name.lower()
+    return "#%s" % name.lower()
+
+
+def installer_anchor(project, variant):
+    return package_anchor(project.installer, variant)
+
+
 def dir_link(text, channel, path_parts):
-    url = "%s/%s/%s/" % (BASE_URL, channel, "/".join(path_parts))
+    # a trailing "#anchor" element in `path_parts` is a page fragment,
+    # not a directory: it goes after the trailing slash
+    fragment = ""
+    if path_parts and path_parts[-1].startswith("#"):
+        path_parts, fragment = path_parts[:-1], path_parts[-1]
+    url = "%s/%s/%s/%s" % (BASE_URL, channel, "/".join(path_parts), fragment)
     return "[%s](%s)" % (text, url)
 
 
@@ -386,7 +403,8 @@ def print_table(project, channel, version, all_minors=False, links=False):
             for release in releases:
                 present = rpm_present(project, channel, distro, release, disk_arch, version_glob) if disk_arch else None
                 # only a grouped "8.x" row needs its icons labelled with the release
-                entries.append((release if grouped else "", present, [distro, release, disk_arch]))
+                entries.append((release if grouped else "", present,
+                                [distro, release, disk_arch, package_anchor(project.name)]))
             arch_cells[arch] = entries
         variant_path = major_path(channel, distro, variant) if grouped else [distro, variant]
         table_rows.append((distro, [distro], variant, variant_path, arch_cells))
@@ -395,7 +413,8 @@ def print_table(project, channel, version, all_minors=False, links=False):
         arch_cells = {}
         for arch, disk_arch in DEB_ARCH_MAP.items():
             present = deb_present(project, channel, codename, disk_arch, version_glob) if disk_arch else None
-            arch_cells[arch] = [("", present, [codename, "main", "binary-%s" % disk_arch])]
+            path_parts = [codename, "main", "binary-%s" % disk_arch, package_anchor(deb_name(project))]
+            arch_cells[arch] = [("", present, path_parts)]
         # "Debian"/"Ubuntu" is just our own grouping label, not a real directory
         table_rows.append((family, None, codename, [codename], arch_cells))
 
@@ -403,7 +422,8 @@ def print_table(project, channel, version, all_minors=False, links=False):
         arch_cells = {}
         for arch, disk_arch in MACOS_ARCH_MAP.items():
             present = macos_present(project, channel, disk_arch, variant, version_glob) if disk_arch else None
-            arch_cells[arch] = [("", present, ["MacOS", disk_arch] if disk_arch else None)]
+            path_parts = ["MacOS", disk_arch, installer_anchor(project, variant)] if disk_arch else None
+            arch_cells[arch] = [("", present, path_parts)]
         # "full"/"light" share the same directory, there is no variant-specific path
         table_rows.append((distro, ["MacOS"], variant, None, arch_cells))
 
@@ -411,7 +431,8 @@ def print_table(project, channel, version, all_minors=False, links=False):
         arch_cells = {}
         for arch, disk_arch in MSWINDOWS_ARCH_MAP.items():
             present = mswindows_present(project, channel, disk_arch, variant, version_glob) if disk_arch else None
-            arch_cells[arch] = [("", present, ["MSWindows", disk_arch] if disk_arch else None)]
+            path_parts = ["MSWindows", disk_arch, installer_anchor(project, variant)] if disk_arch else None
+            arch_cells[arch] = [("", present, path_parts)]
         table_rows.append((distro, ["MSWindows"], variant, None, arch_cells))
 
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
