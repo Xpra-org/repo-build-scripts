@@ -339,8 +339,14 @@ def anchor(project, channel):
 
 
 def print_index(channel):
-    # local links to each project's table, followed by a horizontal rule
-    print("# Index:")
+    # page title, as a yaml metadata block (used by "pandoc -s" for the html <title>),
+    # then local links to each project's table, followed by a horizontal rule
+    print("---")
+    print("pagetitle: xpra.org %s packages" % channel)
+    print("---")
+    print("# xpra.org %s packages" % channel)
+    print()
+    print("## Index:")
     for project in PROJECTS:
         print("* [%s %s packages](#%s)" % (project.name, channel, anchor(project, channel)))
     print()
