@@ -348,7 +348,7 @@ def print_index(channel):
     print()
     print("## Index:")
     for project in PROJECTS:
-        print("* [%s %s packages](#%s)" % (project.name, channel, anchor(project, channel)))
+        print("* [`%s` %s packages](#%s)" % (project.name, channel, anchor(project, channel)))
     print()
     print("---")
     print()
@@ -405,7 +405,7 @@ def print_table(project, channel, version, all_minors=False, links=False):
     # markdown renderer generates heading ids
     print('<a id="%s"></a>' % anchor(project, channel))
     print()
-    print("## %s %s packages:" % (project.name, channel))
+    print("## `%s` %s packages:" % (project.name, channel))
     print()
     # trailing double space: markdown hard line break, one count per line
     for icon, label in ((GREEN, "available"), (RED, "missing"), (NA, "not provided")):
