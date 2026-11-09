@@ -37,7 +37,7 @@ function fetch() {
 			echo "found ${FILENAME}"
 		else
 			echo "downloading $FILENAME from ${URL}"
-			curl --output "${FILENAME}" -L "${URL}"
+			curl --fail --output "${FILENAME}" -L "${URL}" || { echo "failed to download ${URL}"; rm -f "${FILENAME}"; }
 		fi
 	done
 }
