@@ -381,10 +381,11 @@ def print_table(project, channel, version, all_minors=False, links=False):
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
     counts = count_icons(table_rows)
-    print("## %s" % project.name)
+    print("## %s packages:" % project.name)
     print()
-    print("%s: %s" % (channel, version or "no version found"))
-    print(", ".join("%s %i" % (icon, counts[icon]) for icon in (RED, GREEN, NA)))
+    # trailing double space: markdown hard line break, one count per line
+    for icon, label in ((GREEN, "available"), (RED, "missing"), (NA, "not provided")):
+        print("%s %i %s  " % (icon, counts[icon], label))
     print()
     headers = ["distro", "variant"] + ARCHES
     print("| " + " | ".join(headers) + " |")
