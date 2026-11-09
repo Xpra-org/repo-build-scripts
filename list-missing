@@ -381,7 +381,7 @@ def print_table(project, channel, version, all_minors=False, links=False):
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
     counts = count_icons(table_rows)
-    print("## %s packages:" % project.name)
+    print("## %s %s packages:" % (project.name, channel))
     print()
     # trailing double space: markdown hard line break, one count per line
     for icon, label in ((GREEN, "available"), (RED, "missing"), (NA, "not provided")):
