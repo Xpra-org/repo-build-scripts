@@ -2,7 +2,7 @@
 # Show which package builds are present in the local mirror of the build output
 # repos (~/projects/repos/{lts,stable,beta}), as a markdown status table for one
 # channel - one table per project (xpra, go-xpra and rust-xpra), separated by
-# horizontal rules. The version checked is auto-detected separately for each
+# horizontal rules, after an index linking to each of them. The version checked is auto-detected separately for each
 # project, as the latest version of it found in that channel's mirror.
 #
 # RHEL clones keep every point release around, so those are shown as a single
@@ -334,6 +334,20 @@ def label_markup(text, channel, path_parts, links):
     return dir_link(text, channel, path_parts)
 
 
+def anchor(project, channel):
+    return "%s-%s" % (project.name, channel)
+
+
+def print_index(channel):
+    # local links to each project's table, followed by a horizontal rule
+    print("# Index:")
+    for project in PROJECTS:
+        print("* [%s %s packages](#%s)" % (project.name, channel, anchor(project, channel)))
+    print()
+    print("---")
+    print()
+
+
 def print_table(project, channel, version, all_minors=False, links=False):
     # projects which have no builds at all in this channel have no version to
     # check for, so every build they could have is simply shown as missing
@@ -381,6 +395,10 @@ def print_table(project, channel, version, all_minors=False, links=False):
     table_rows.sort(key=lambda r: (r[0], natural_key(r[2])))
 
     counts = count_icons(table_rows)
+    # explicit anchor for the index links, so they don't depend on how a given
+    # markdown renderer generates heading ids
+    print('<a id="%s"></a>' % anchor(project, channel))
+    print()
     print("## %s %s packages:" % (project.name, channel))
     print()
     # trailing double space: markdown hard line break, one count per line
@@ -409,6 +427,7 @@ def main():
 
     channel = args[0]
     versions = latest_versions(channel)
+    print_index(channel)
     for i, project in enumerate(PROJECTS):
         if i:
             # markdown horizontal rule separating each project's table
