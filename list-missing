@@ -381,7 +381,7 @@ def print_index(channel):
     print()
     print("## Index:")
     for project in PROJECTS:
-        print("* [`%s` %s packages](#%s)" % (project.name, channel, anchor(project, channel)))
+        print("* [`%s`](#%s)" % (project.name, anchor(project, channel)))
     print()
     print("---")
     print()
