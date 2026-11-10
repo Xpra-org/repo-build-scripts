@@ -45,6 +45,7 @@ PROJECTS = [
     Project("xpra-html5", None, ["full"]),
     Project("go-xpra", "Go-Xpra", ["full"]),
     Project("rust-xpra", "Rust-Xpra", ["full"]),
+    Project("c-xpra", "C-xpra", ["full"]),
 ]
 
 # kept in sync with repos/bin/update-rpm-repos.sh and repos/bin/update-deb-packages.py
