@@ -443,7 +443,9 @@ def print_table(project, channel, version, all_minors=False, links=False):
     # markdown renderer generates heading ids
     print('<a id="%s"></a>' % anchor(project, channel))
     print()
-    print("## `%s` %s packages:" % (project.name, channel))
+    # show the version being checked, when there is one
+    version_str = " %s" % version if version else ""
+    print("## `%s` %s%s packages:" % (project.name, channel, version_str))
     print()
     # trailing double space: markdown hard line break, one count per line
     for icon, label in ((GREEN, "available"), (RED, "missing"), (NA, "not provided")):
