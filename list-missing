@@ -41,11 +41,11 @@ ARCHES = ["x86_64", "aarch64", "riscv64"]
 Project = namedtuple("Project", "name installer variants deb_name", defaults=(None,))
 PROJECTS = [
     Project("xpra", "Xpra", ["full", "light"]),
-    Project("xorg-x11-drv-dummy", None, ["full"], "xserver-xorg-video-dummy"),
     Project("xpra-html5", None, ["full"]),
     Project("go-xpra", "Go-Xpra", ["full"]),
     Project("rust-xpra", "Rust-Xpra", ["full"]),
     Project("c-xpra", "C-xpra", ["full"]),
+    Project("xorg-x11-drv-dummy", None, ["full"], "xserver-xorg-video-dummy"),
 ]
 
 # kept in sync with repos/bin/update-rpm-repos.sh and repos/bin/update-deb-packages.py
