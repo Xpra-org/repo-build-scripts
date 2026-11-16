@@ -444,7 +444,7 @@ def print_table(project, channel, version, all_minors=False, links=False):
     print('<a id="%s"></a>' % anchor(project, channel))
     print()
     # show the version being checked, when there is one
-    version_str = " %s" % version if version else ""
+    version_str = " v%s" % version if version else ""
     print("## `%s` %s%s packages:" % (project.name, channel, version_str))
     print()
     # trailing double space: markdown hard line break, one count per line
